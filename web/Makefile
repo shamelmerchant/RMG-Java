@@ -29,7 +29,7 @@ help:
 	@echo "  linkcheck to check all external links for integrity"
 	@echo "  upload    to upload to Sourceforge"
 	@echo "  sitemap   update the google sitemap"
-	@echo "  all       update, clean, html, latex, sitemap, upload"
+	@echo "  all       clean, html, latex, sitemap, upload"
 
 
 all: html latex sitemap upload
@@ -102,7 +102,7 @@ sitemap:
 upload:
 	@echo "Uploading to SourceForge.net..."
 	$(REMOVEAPPLEJUNK)
-	rsync -rtza --rsh=ssh build/html/* rhw27,rmg@web.sourceforge.net:htdocs/
-	rsync -rtza --rsh=ssh build/latex/*.pdf rhw27,rmg@web.sourceforge.net:htdocs/
+	rsync -rtza --rsh=ssh build/html/* rhw27,rmg@web.sourceforge.net:htdocs/3.2/
+	rsync -rtza --rsh=ssh build/latex/*.pdf rhw27,rmg@web.sourceforge.net:htdocs/3.2/
 	#scp -r build/html/* athena.dialup.mit.edu:www/RMG/
 	#scp build/latex/*.pdf athena.dialup.mit.edu:www/RMG/

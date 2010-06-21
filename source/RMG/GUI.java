@@ -125,8 +125,8 @@ public class GUI extends JPanel implements ActionListener {
     	JComponent tabSensitivity = createTabSensitivity();
     	//	Add the individual tabs to the main panel
     	tabbedPanel.addTab("Initial Conditions", null, tabInputs, "Specify Reactants, Inerts, & Temperature/Pressure Model");
-    	tabbedPanel.addTab("Thermochemical Libraries", null, tabInitialization, "Specify Thermochemical Library");
-    	tabbedPanel.addTab("Termination", null, tabTermination, "Specify Simulation Termination Conditions");
+    	tabbedPanel.addTab("Species/Reaction Libraries", null, tabInitialization, "Specify thermochemistry/transport properties for individual species & rates for individual reactions");
+    	tabbedPanel.addTab("Termination Criteria", null, tabTermination, "Specify Simulation Termination Conditions");
     	tabbedPanel.addTab("Dynamic Simulator", null, tabSolver, "Specify Solver Tolerances");
     	tabbedPanel.addTab("Additional Options", null, tabOptions, "Specify Other Options");
     	tabbedPanel.addTab("Sensitivity Analysis", null, tabSensitivity, "Specify Error/Sensitivity Analysis Criteria");
@@ -567,6 +567,7 @@ public class GUI extends JPanel implements ActionListener {
     	JPanel PTL = new JPanel();
     	PTL.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Primary Thermo Library"),
     			BorderFactory.createEmptyBorder(5,5,5,5)));
+    	PTL.setToolTipText("Override RMG's group-additivity algorithm to compute species' thermochemistry");
 
     	//	Create PTL Name label
     	JPanel ptlName = new JPanel();
@@ -652,6 +653,7 @@ public class GUI extends JPanel implements ActionListener {
     	JPanel PTransL = new JPanel();
     	PTransL.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Primary Transport Library"),
     			BorderFactory.createEmptyBorder(5,5,5,5)));
+    	PTransL.setToolTipText("Override RMG's group-additivity algorithm to compute species' Lennard-Jones parameters");
 
     	//	Create PTransL Name label
     	JPanel ptranslName = new JPanel();
@@ -735,6 +737,7 @@ public class GUI extends JPanel implements ActionListener {
     	JPanel PRL = new JPanel();
     	PRL.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Primary Kinetic Library"),
     			BorderFactory.createEmptyBorder(5,5,5,5)));
+    	PRL.setToolTipText("Override RMG's algorithm to compute a reaction's rate coefficient");
 
     	//	Create PKL Name label
     	JPanel prlName = new JPanel();
@@ -812,6 +815,7 @@ public class GUI extends JPanel implements ActionListener {
     	JPanel SM = new JPanel();
     	SM.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Seed Mechanism"),
     			BorderFactory.createEmptyBorder(5,5,5,5)));
+    	SM.setToolTipText("Populate the mechanism with a list of species / reaction, without using RMG's rate-based algorithm");
 
     	//	Create SM Name label
     	JPanel smName = new JPanel();
@@ -981,7 +985,6 @@ public class GUI extends JPanel implements ActionListener {
         interConv.add(interCombo = new JComboBox(interOptions));
         interCombo.addActionListener(this);
         interCombo.setRenderer(centerJComboBoxRenderer);
-        interCombo.setSelectedIndex(1);
         interCombo.setActionCommand("Pruning");
         
     	/*
@@ -1032,8 +1035,6 @@ public class GUI extends JPanel implements ActionListener {
         textMaxSpc.setEnabled(false);
         
     	Box pruningOptionsBox = Box.createVerticalBox();
-    	pruningOptionsBox.add(interConv);
-    	pruningOptionsBox.add(indivSteps);
     	pruningOptionsBox.add(terminTol);
     	pruningOptionsBox.add(pruneTol);
     	pruningOptionsBox.add(minSpc4Prune);
@@ -1045,7 +1046,9 @@ public class GUI extends JPanel implements ActionListener {
     	ds.add(dsSolver);
     	ds.add(aTolPanel);
     	ds.add(rTolPanel);
-    	//ds.add(interConv);    	
+    	//ds.add(interConv);
+    	ds.add(interConv);
+    	ds.add(indivSteps);
     	DS.add(ds);
     	
     	Prune.add(pruningOptionsBox);
@@ -3264,14 +3267,16 @@ public class GUI extends JPanel implements ActionListener {
     			
     	}
     	else if ("pDep".equals(event.getActionCommand())) {
-    		JComponent[] pDepComps = {sdeCombo, pdkmCombo, grainsizeCombo};
+    		JComponent[] pDepComps = {pdkmCombo, grainsizeCombo};
     		JComponent[] pdkmComps = {chebyTMin, chebyTMax, chebyTUnits, chebyTGen, chebyTRep,
     				chebyPMin, chebyPMax, chebyPUnits, chebyPGen, chebyPRep,
     				chebyPCombo, chebyTCombo, chebyP, chebyT};
     		if (pdepCombo.getSelectedItem().equals("off")) {
+    			sdeCombo.setSelectedItem("off");
     			disableComponents(pDepComps);
     			disableComponents(pdkmComps);
     		} else {
+    			sdeCombo.setSelectedItem("Frequency Groups");
     			enableComponents(pDepComps);
     			enableComponents(pdkmComps);
     			JComponent[] tlistComps = {chebyT};
@@ -3404,10 +3409,10 @@ public class GUI extends JPanel implements ActionListener {
 	//	Tab4: Dynamic Simulator
 	String[] pdepOptions = {"off", "Reservoir State", "Modified Strong Collision"};
 	String[] simOptions = {"DASSL", "DASPK"}; //"CHEMKIN"
-	String[] sdeOptions = {"Frequency Groups"}; //"Three Frequency Model"
+	String[] sdeOptions = {"off","Frequency Groups"}; //"Three Frequency Model"
 	String[] pdkmOptions = {"CHEB", "PLOG", "Rate"};
 	String[] listormaxmin = {"List", "Max/Min"};
-	String[] interOptions = {"Indiv. time steps","AUTO","AUTOPRUNE"};
+	String[] interOptions = {"AUTO","AUTOPRUNE","Indiv. time steps"};
 	//	Tab : Additional Options
 	String[] AUnitsOptions = {"moles", "molecules"};
 	String[] EaUnitsOptions = {"kcal/mol", "cal/mol", "kJ/mol", "J/mol", "Kelvins"};
