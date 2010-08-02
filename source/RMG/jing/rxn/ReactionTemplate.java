@@ -382,16 +382,7 @@ public class ReactionTemplate {
   		  k = getPrimaryKineticRate(p_structure);
   	  }
   	  if (k != null) {
-  		  k[0].setFromPrimaryKineticLibrary(true);
-  		  String currentSource = k[0].getSource();
-  		  if (this.direction == -1) {
-  			  if (!currentSource.contains(this.reverseReactionTemplate.name))
-  				  k[0].setSource(this.reverseReactionTemplate.name+": "+k[0].getSource());
-  		  }
-  		  else	{
-  			  if (!currentSource.contains(this.name))
-  				  k[0].setSource(this.name+": "+k[0].getSource());
-  		  }
+  		  setRateCoefficientSource(k);
   		  p_structure.setDirection(getPrimaryKineticDirection(p_structure));
   		  return k;
   	  }
@@ -503,16 +494,7 @@ public class ReactionTemplate {
 	  		  k = getPrimaryKineticRate(p_structure);
 	  	  }
 	  	  if (k != null) {
-	  		  k[0].setFromPrimaryKineticLibrary(true);
-	  		  String currentSource = k[0].getSource();
-	  		  if (this.direction == -1) {
-	  			  if (!currentSource.contains(this.reverseReactionTemplate.name))
-	  				  k[0].setSource(this.reverseReactionTemplate.name+" "+k[0].getSource());
-	  		  }
-	  		  else	{
-	  			  if (!currentSource.contains(this.name))
-	  				  k[0].setSource(this.name+" "+k[0].getSource());
-	  		  }
+	  		  setRateCoefficientSource(k);
 	  		  p_structure.setDirection(1);
 	  		  return k;
 	  	  }
@@ -606,11 +588,21 @@ public class ReactionTemplate {
 			Global.RT_findRateConstant += (System.currentTimeMillis()-pT)/1000/60;
 			return null;
       }
-      
-      
-      
-      
-      //#]
+  }
+  
+  public void setRateCoefficientSource(Kinetics[] k) {
+	  for (int numK=0; numK<k.length; numK++) {
+  		  k[numK].setFromPrimaryKineticLibrary(true);
+  		  String currentSource = k[numK].getSource();
+  		  if (this.direction == -1) {
+  			  if (!currentSource.contains(this.reverseReactionTemplate.name))
+  				  k[numK].setSource(this.reverseReactionTemplate.name+" "+k[numK].getSource());
+  		  }
+  		  else	{
+  			  if (!currentSource.contains(this.name))
+  				  k[numK].setSource(this.name+" "+k[numK].getSource());
+  		  }
+	  }
   }
   
   /**
@@ -1178,221 +1170,7 @@ public class ReactionTemplate {
       return reverseReaction;
       //#]
   }
-	
-	   //## operation reactTwoReactants(ChemGraph,ChemGraph) 
-  protected LinkedHashSet reactTwoReactants(ChemGraph p_chemGraph1, ChemGraph p_chemGraph2) {
-      //#[ operation reactTwoReactants(ChemGraph,ChemGraph) 
-	  LinkedHashSet reaction_set = new LinkedHashSet();
-      
-      ChemGraph r1 = p_chemGraph1;
-      ChemGraph r2;
-      if (p_chemGraph1 == p_chemGraph2) {
-      	try{
-      		r2 = ChemGraph.copy(p_chemGraph2);
-      	}
-      	catch (ForbiddenStructureException e) {
-      		return reaction_set;
-      	}
-      }
-      else {
-      	r2 = p_chemGraph2;
-      }
-      
-      
-      
-      /*if (name.equalsIgnoreCase("H_Abstraction")){
-    	  System.out.println( "Here");
-      }*/
-      
-      LinkedHashSet allReactionSites1 = structureTemplate.identifyReactedSites(r1,1);
-      LinkedHashSet allReactionSites2 = structureTemplate.identifyReactedSites(r2,2);
-      
-      if (allReactionSites1.isEmpty() || allReactionSites2.isEmpty()) return reaction_set;
-      
-     
-      
-      LinkedList reactant = new LinkedList();
-	  LinkedList reactantSp = new LinkedList();
-      reactant.add(r1);
-      reactant.add(r2);
-	  reactantSp.add(r1.getSpecies());
-	  reactantSp.add(r2.getSpecies());
-      
-	  LinkedHashMap structureMap = new LinkedHashMap();
-	  LinkedHashMap rateMap = new LinkedHashMap();
-	  LinkedHashMap reactionMap = new LinkedHashMap();
-      
-      for (Iterator iter1 = allReactionSites1.iterator(); iter1.hasNext(); ) {
-      	MatchedSite ms1 = (MatchedSite)iter1.next();
-      	HashMap site1 = ms1.getCenter();
-          r1.resetReactedSite(site1);
-      
-          boolean forbidden1 = false;
-          Iterator forbiddenIter = forbiddenStructures.values().iterator();
-          while (forbiddenIter.hasNext()){
-        	  Matchable fg = (Matchable)forbiddenIter.next();
-        	  if (r1.isSubAtCentralNodes(fg)){
-        		  forbidden1 = true;
-        		  break;
-        	  }
-          }
-          if (forbidden1) continue;
-          
-          int redundancy1 = ms1.getRedundancy();
-      
-      	for (Iterator iter2 = allReactionSites2.iterator(); iter2.hasNext(); ) {
-      		MatchedSite ms2 = (MatchedSite)iter2.next();
-      		HashMap site2 = (HashMap)ms2.getCenter();
-      	    r2.resetReactedSite(site2);
-      
-      	    boolean forbidden2 = false;
-      	    forbiddenIter = forbiddenStructures.values().iterator();
-      	    while (forbiddenIter.hasNext()){
-      	    	Matchable fg = (Matchable)forbiddenIter.next();
-      	    	if (r2.isSubAtCentralNodes(fg)){
-      	    		forbidden2 = true;
-      	    		break;
-      	    	}
- 	         }
- 	         if (forbidden2) continue;
-          
-      	    int redundancy2 = ms2.getRedundancy();
-      		int redundancy = redundancy1*redundancy2;
-      
-           	try {
-      	     	LinkedList product = reactionAdjList.reactChemGraph(reactant);
-				LinkedList productSp = new LinkedList();
-				SpeciesDictionary sd = SpeciesDictionary.getInstance();
-				for (int i=0; i< product.size(); i++){
-					String name = null;
-					if (((ChemGraph)product.get(i)).getSpecies() == null){
-						Species sp = Species.make(name, ((ChemGraph)product.get(i)));
-						productSp.add(sp);
-					}
-				}
-				double pt = System.currentTimeMillis();
-      	        boolean rpsame = MathTool.isListEquivalent(reactantSp, productSp);
-				Global.checkReactionReverse = Global.checkReactionReverse + (System.currentTimeMillis()-pt)/1000/60;
-      	        if (!rpsame) {
-          			Structure structure = new Structure(reactant,product);
-					Structure structureSp = new Structure(reactantSp,productSp);
-					Kinetics[] k = findRateConstant(structure);
-					structureSp.direction = structure.direction;
-          			structure.setRedundancy(redundancy);
-  					Reaction old_reaction = (Reaction)reactionMap.get(structureSp);
-  					if (old_reaction == null){		
-						 
-						TemplateReaction r= TemplateReaction.makeTemplateReaction(structureSp,k, this,structure);
-						if (r != null)
-							reactionMap.put(structureSp,r);
-						structure = null;
-  					}
-  					else {
-  						if (k == null)
-  							old_reaction.addAdditionalKinetics(null, redundancy);
-  						else {
-  							for (int i=0; i<k.length; i++) {
-  								old_reaction.addAdditionalKinetics(k[i], redundancy);
-  							}
-  						}
-						//old_reaction.getStructure().increaseRedundancy(redundancy);
-						structure = null;
-  					}
-      	        }
-      			
-      		}
-      		catch (ForbiddenStructureException e) {
-      			// do the next reaction site
-      		}
-      		catch (InvalidProductNumberException e) {
-      			// do the next reaction site
-      		}
-			catch (InvalidChemGraphException e){
-				
-			}
-      	}
-      }
-      
-      for (Iterator mapIter = reactionMap.values().iterator(); mapIter.hasNext(); ) {
-      	
-      	Reaction reaction = (Reaction)mapIter.next();
-      	//System.out.println(reaction.toString());
-      	if (!reaction.repOk()) throw new InvalidTemplateReactionException(reaction.toString());
-      	//reaction.getStructure().clearChemGraph();
-		reaction.setFinalized(true);
-      	reaction_set.add(reaction);
-      }
-      
-      return reaction_set;
-      //#]
-  }
-  
-  //## operation reactTwoReactants(Species,Species) 
-  public LinkedHashSet reactTwoReactants(Species p_reactant1, Species p_reactant2) {
-      //#[ operation reactTwoReactants(Species,Species) 
-      LinkedList r = new LinkedList();
-      r.add(p_reactant1);
-      r.add(p_reactant2);
-      /*HashSet reaction = getReactionSetFromReactant(r);
-      if (reaction != null) return reaction;*/
-      
-      LinkedHashSet reaction = new LinkedHashSet();
-      
-      boolean RI1 = p_reactant1.hasResonanceIsomers();
-      boolean RI2 = p_reactant2.hasResonanceIsomers();
-      
-      if (!RI1 && !RI2) {
-      	// react the main structre
-      	ChemGraph rg1 = p_reactant1.getChemGraph();
-      	ChemGraph rg2 = p_reactant2.getChemGraph();
-      	reaction = reactTwoReactants(rg1,rg2);
-      }
-      else if (!RI1 && RI2) {
-      	ChemGraph rg1 = p_reactant1.getChemGraph();
-      	Iterator iter = p_reactant2.getResonanceIsomers();
-      	// react the resonance isomers
-      	while (iter.hasNext()) {
-      		ChemGraph rg2 = (ChemGraph)iter.next();
-      		LinkedHashSet more = reactTwoReactants(rg1,rg2);
-      		reaction.addAll(more);
-      	}
-			
-      }
-      else if (RI1 && !RI2) {
-      	ChemGraph rg2 = p_reactant2.getChemGraph();
-      	Iterator iter = p_reactant1.getResonanceIsomers();
-      	// react the resonance isomers
-      	while (iter.hasNext()) {
-      		ChemGraph rg1 = (ChemGraph)iter.next();
-      		LinkedHashSet more = reactTwoReactants(rg1,rg2);
-      		reaction.addAll(more);
-      	}
-      }
-      else {
-      	Iterator iter1 = p_reactant1.getResonanceIsomers();
-      	while (iter1.hasNext()) {
-      		ChemGraph rg1 = (ChemGraph)iter1.next();
-      		Iterator iter2 = p_reactant2.getResonanceIsomers();
-      		while (iter2.hasNext()) {
-      			ChemGraph rg2 = (ChemGraph)iter2.next();
-      			LinkedHashSet more = reactTwoReactants(rg1,rg2);
-      			reaction.addAll(more);
-      		}
-      	}
-      }
-      // put int reactionDictionaryByReactant
-      //reactionDictionaryByReactant.put(r,reaction);
-      
-      // return the reaction set
-      return reaction;
-      
-      
-      
-      
-      
-      //#]
-  }
-  
+ 
   /**
    * reactTwoReactants
    * 	17-Jun-2009 MRH
@@ -1574,6 +1352,7 @@ public class ReactionTemplate {
       	if (reverseRTName != null && reverseRTName.compareToIgnoreCase("none")!=0) {
       		System.out.println("Generating reverse template: "+reverseRTName);
       		reverseReactionTemplate = generateReverseReactionTemplate(reverseRTName);
+      		reverseReactionTemplate.forbiddenStructures = forbiddenStructures;
       	}
       }
       catch (Exception e) {

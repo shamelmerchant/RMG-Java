@@ -382,6 +382,9 @@ public class PDepNetwork {
 
 		// Add reaction
 		pathReactionList.add(newRxn);
+		
+		// Mark network as changed so that updated rates can be determined
+		altered = true;
 	}
 
 	/**
@@ -412,7 +415,20 @@ public class PDepNetwork {
 			Reaction rxn = (Reaction) iter.next();
 			if (!contains(rxn)) {
 				addReactionToNetworks(rxn);
-				((CoreEdgeReactionModel)reactionModel).addReaction(rxn);
+				/*
+				 * The reactions (of form A --> B or A --> C + D) could form
+				 * 	a species that is not otherwise in the edge of the
+				 * 	CoreEdgeReactionModel.
+				 * We want to leave all of the reactions alone (i.e. not add
+				 * 	them to the core OR edge) but need to check whether any
+				 * 	of the new species should be added to the edge.
+				 */
+				LinkedList rxnProducts = rxn.getProductList();
+				for (int numProds=0; numProds<rxnProducts.size(); numProds++) {
+					if (!((CoreEdgeReactionModel)reactionModel).containsAsReactedSpecies((Species)rxnProducts.get(numProds)))
+						if (!((CoreEdgeReactionModel)reactionModel).containsAsUnreactedSpecies((Species)rxnProducts.get(numProds)))
+							((CoreEdgeReactionModel)reactionModel).addUnreactedSpecies((Species)rxnProducts.get(numProds));
+				}
 			}
 		}
 
@@ -483,7 +499,7 @@ public class PDepNetwork {
 		// reaction), use the high-pressure limit rate as the flux rather than
 		// the k(T,P) value to ensure that we are considering the maximum
 		// possible flux entering the network
-		if (pathReactionList.size() == 1 && nonincludedReactionList.size() == 1 && netReactionList.size() == 0) {
+		if (pathReactionList.size() == 1 && netReactionList.size() == 0) {
 			PDepReaction rxn = pathReactionList.get(0);
 			if (!rxn.getProduct().getIncluded())
 				rLeak += rxn.calculateForwardFlux(ss);
@@ -512,8 +528,17 @@ public class PDepNetwork {
 	 */
 	public PDepIsomer getMaxLeakIsomer(SystemSnapshot ss) throws PDepException {
 
-		if (nonincludedReactionList.size() == 0)
+		if (nonincludedReactionList.size() == 0) {
+			if (pathReactionList.size() == 1 && isomerList.size() == 2) {
+				PDepIsomer isomer1 = isomerList.get(0);
+				PDepIsomer isomer2 = isomerList.get(1);
+				if (isomer1.isUnimolecular() && !isomer1.getIncluded())
+					return isomer1;
+				else if (isomer2.isUnimolecular() && !isomer2.getIncluded())
+					return isomer2;
+			}
 			throw new PDepException("Tried to determine nonincluded isomer with maximum leak flux, but there are no nonincluded reactions, so no isomer can be identified.");
+		}
 
 		PDepReaction maxReaction = null;
 		double maxLeak = 0.0;
@@ -776,6 +801,59 @@ public class PDepNetwork {
 			}
 		}
 		return coreReactions;
+	}
+
+	/**
+	 * Counts the number of edge reactions that are hidden amongst those
+	 * net reactions which are found in the pressure-dependent networks.
+	 * @param cerm The current core/edge reaction model
+	 * @return The number of edge reactions found
+	 */
+	public static int getNumEdgeReactions(CoreEdgeReactionModel cerm) {
+		return getEdgeReactions(cerm).size();
+	}
+	/**
+	 * Returns the edge reactions that are hidden amongst those
+	 * net reactions which are found in the pressure-dependent networks.
+	 * @param cerm The current core/edge reaction model
+	 * @return The list of edge reactions found
+	 */
+	public static LinkedList<PDepReaction> getEdgeReactions(CoreEdgeReactionModel cerm) {
+		LinkedList<PDepReaction> edgeReactions = new LinkedList<PDepReaction>();
+		for (ListIterator<PDepNetwork> iter0 = networks.listIterator(); iter0.hasNext(); ) {
+			PDepNetwork pdn = iter0.next();
+			for (ListIterator<PDepReaction> iter = pdn.getNetReactions().listIterator(); iter.hasNext(); ) {
+				PDepReaction rxn = iter.next();
+				if (rxn.getReactant().getIncluded() && rxn.getProduct().getIncluded()) {
+					if (rxn.isEdgeReaction(cerm) && !edgeReactions.contains(rxn))
+						edgeReactions.add(rxn);
+				}
+			}
+		}
+		return edgeReactions;
+	}
+
+	/**
+	 * Check whether or not a given species is an included (fully explored)
+	 * unimolecular isomer in any currently-existing network.
+	 * @param species The species to check for included status
+	 * @return true if the species is included in any existing network, false if not
+	 */
+	public static boolean isSpeciesIncludedInAnyNetwork(Species species) {
+		for (Iterator iter = networks.iterator(); iter.hasNext(); ) {
+			PDepNetwork network = (PDepNetwork) iter.next();
+			if (network.contains(species)) {
+				PDepIsomer isomer = network.getIsomer(species);
+				if (isomer.isUnimolecular() && isomer.getIncluded())
+					// We've identified a network wherein the species exists as
+					// a unimolecular isomer, and that its path reactions have
+					// been fully explored
+					// This satisfies all of the conditions, so we return true
+					return true;
+			}
+		}
+		// No suitable match for all conditions was found, so we return false
+		return false;
 	}
 
 }

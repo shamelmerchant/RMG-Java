@@ -128,6 +128,18 @@ public class PDepRateConstant {
 		chebyshev = null;
 		pDepArrhenius = plogKinetics;
 	}
+	
+	public PDepRateConstant(PDepArrheniusKinetics plogKinetics) {
+		rateConstants = null;
+		chebyshev = null;
+		pDepArrhenius = plogKinetics;
+	}
+	
+	public PDepRateConstant(ChebyshevPolynomials chebyPols) {
+		rateConstants = null;
+		chebyshev = chebyPols;
+		pDepArrhenius = null;
+	}
 
 	//==========================================================================
 	//
@@ -287,6 +299,22 @@ public class PDepRateConstant {
 		TMAX = t;
 	}
 	
+	public static Pressure getPMin() {
+		return PMIN;
+	}
+
+	public static Pressure getPMax() {
+		return PMAX;
+	}
+
+	public static Temperature getTMin() {
+		return TMIN;
+	}
+
+	public static Temperature getTMax() {
+		return TMAX;
+	}
+
 	public double[][] getRateConstants() {
 		return rateConstants;
 	}

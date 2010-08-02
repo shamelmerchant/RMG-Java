@@ -322,8 +322,17 @@ public class PDepReaction extends Reaction {
 	public String toString() {
 		if (reactant == null || product == null)
 			return "";
-		else
-			return (reactant.toString() + " --> " + product.toString());
+		else {
+			/*
+			 * Distinguish between reversible and irreversible pdep reactions
+			 * 	In particular, this is important when writing/reading
+			 * 	Restart/pdepnetworks.txt file
+			 */
+			if (this.getReverseReaction() == null)
+				return (reactant.toString() + " --> " + product.toString());
+			else
+				return (reactant.toString() + " <=> " + product.toString());
+		}
 	}
 	
 	/**
@@ -516,7 +525,9 @@ public class PDepReaction extends Reaction {
 			if (PDepRateConstant.getMode() == PDepRateConstant.Mode.CHEBYSHEV)
 				result = formPDepSign(result);
 			result += '\t' + "1.0E0 0.0 0.0" ;
-			result += "\t!" + getComments().toString()  + '\n';
+			result += "\t!" + getComments().toString() +
+				"\tdeltaHrxn(T=298K) = " + 
+				calculateHrxn(new Temperature(298.0,"K")) + " kcal/mol\n";
 			if (PDepRateConstant.getMode() == PDepRateConstant.Mode.CHEBYSHEV)
 				result += pDepRate.getChebyshev().toChemkinString() + '\n';
 			else if (PDepRateConstant.getMode() == PDepRateConstant.Mode.PDEPARRHENIUS)

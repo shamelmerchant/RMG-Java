@@ -32,7 +32,7 @@ help:
 	@echo "  all       clean, html, latex, sitemap, upload"
 
 
-all: html latex sitemap upload
+all: clean html latex sitemap upload
 
 clean:
 	-rm -rf build/*
@@ -102,7 +102,7 @@ sitemap:
 upload:
 	@echo "Uploading to SourceForge.net..."
 	$(REMOVEAPPLEJUNK)
-	rsync -rtza --rsh=ssh build/html/* rhw27,rmg@web.sourceforge.net:htdocs/3.2/
-	rsync -rtza --rsh=ssh build/latex/*.pdf rhw27,rmg@web.sourceforge.net:htdocs/3.2/
+	rsync -rtza --rsh=ssh build/html/* rhw27,rmg@web.sourceforge.net:htdocs/
+	rsync -rtza --rsh=ssh build/latex/*.pdf rhw27,rmg@web.sourceforge.net:htdocs/
 	#scp -r build/html/* athena.dialup.mit.edu:www/RMG/
 	#scp build/latex/*.pdf athena.dialup.mit.edu:www/RMG/

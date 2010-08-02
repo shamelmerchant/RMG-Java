@@ -453,6 +453,90 @@ public class ChemGraph implements Matchable {
         //#]
     }
 
+    //takes the fragments and corresponding rotor nodes for each side of the rotor
+    public int calculateRotorSymmetryNumber(Node p_node1, Node p_node2) {
+	//first calculate the symmetry number for each fragment
+	int frag1sn=calculateRotorFragmentSymmetryNumber(p_node1);//will return 1, 2, or 3
+	int frag2sn=calculateRotorFragmentSymmetryNumber(p_node2);//will return 1, 2, or 3
+	if(frag1sn==3 || frag2sn==3){
+	    if(frag1sn==3){
+		if(frag2sn==3) return 3; //example: ethane
+		else if (frag2sn==2) return 6; //example: toluene
+		else return 3; //frag2sn==1; example: methanol
+	    }
+	    else{//frag2sn==3 (and frag1sn!=3)
+		if (frag2sn==2) return 6;//see above
+		else return 3; //frag1sn==1; see above
+	    }
+	}
+	else if(frag1sn==2 || frag2sn==2){
+	    return 2; //see "full" code below
+	    //if(frag1sn==2){
+		
+		//if(frag2sn==2) return 2; //example: biphenyl
+		//else return 2; //frag2sn==1; example: phenol
+	    //}
+	    //else{//frag2sn==2 (and frag1sn=1)
+		//return 2;//see above
+	    //}
+	}
+	//otherwise, both frag1sn and frag2sn equal 1
+
+	return 1;
+    }
+
+    //returns 1, 2, or 3 based on the rotor fragment and rotor node passed in
+    //code is based off of calculateAtomSymmetryNumber as the idea is similar, but we must be able to handle incomplete fragments, triple bonds, and aromatic structures
+    //code does not handle radicals at present
+    public int calculateRotorFragmentSymmetryNumber(Node p_node) {
+
+	Atom atom = (Atom)p_node.getElement();
+        Iterator neighbor_iter = p_node.getNeighbor();
+        FGElement fge = (FGElement)p_node.getFgElement();
+	if(atom.isRadical()){
+	    System.out.println("Error: calculateRotorFragmentSymmetryNumber() does not support radical sites");
+	    System.exit(0);
+	}
+        // if no neighbor or only one neighbor, sigma = 1, return 1;
+        int neighborNumber = p_node.getNeighborNumber();
+        if (neighborNumber < 2){
+	    if(fge.equals(FGElement.make("Ct"))){//triple bond case
+		//find the end of the cumulated triple bond system
+		Node n1 = p_node;
+                LinkedHashSet axis = new LinkedHashSet();
+		Arc arc = (Arc)neighbor_iter.next();
+                axis.add(arc);
+                p_node = getToEndOfCumulatedTripleBondSystem(arc,p_node,axis);
+		//use the new, non-Ct node for subsequent calculations
+		fge = (FGElement)p_node.getFgElement();
+		neighbor_iter = p_node.getNeighbor();
+		fge = (FGElement)p_node.getFgElement();
+	    }
+	    else{//e.g. peroxides, alcohols, etc.
+		return 1;
+	    }
+	}
+
+	if (fge.equals(FGElement.make("Cs")) || fge.equals(FGElement.make("Sis"))) {
+		Arc a1 = (Arc)neighbor_iter.next();
+		Arc a2 = (Arc)neighbor_iter.next();
+		Arc a3 = (Arc)neighbor_iter.next();
+		if (p_node.isSymmetric(a1,a2)) {
+			if (p_node.isSymmetric(a1,a3))
+				return 3;//AAA*//e.g. methyl rotor
+		}
+	}
+	else if(fge.equals(FGElement.make("Cb")) || fge.equals(FGElement.make("Cbf"))){
+	    	Arc a1 = (Arc)neighbor_iter.next();
+		Arc a2 = (Arc)neighbor_iter.next();
+		if (p_node.isSymmetric(a1,a2)) {
+		    return 2;//AA*//e.g. phenyl group
+		}
+	}
+
+        return 1;
+    }
+
     /**
     Requires: acyclic ChemGraph
     Effects: calculate and return the symmetry number by all the possible symmetry axis in this ChemGraph.
@@ -831,6 +915,57 @@ return sn;
         //#]
     }
 
+    //uses same algorithm as calculate internal rotor, but stores the two atoms involved in the rotor and all the atoms on one side of the rotor (specifically, the side corresponding to the 2nd atom of the rotor)
+    //the information is returned in a LinkedHashMap where the Key is an array of [atom0 atom1 atom2 atom3] (with atom1 and atom2 being the "rotor atoms" and the others being the dihedral atoms) and the value is a Collection of atoms IDs associated with atom2
+    //note that at this stage, there is no check to make sure that the dihedral atoms are not collinear
+    public LinkedHashMap getInternalRotorInformation(){
+	LinkedHashMap rotorInfo = new LinkedHashMap();
+	Graph g = getGraph();
+        for (Iterator iter = g.getArcList(); iter.hasNext();) {
+        	Arc a = (Arc)iter.next();
+        	Bond bond = (Bond)a.getElement();
+        	if (bond.isSingle() && !a.getInCycle()) {
+        		Iterator atomIter = a.getNeighbor();
+        		Node n1 = (Node)atomIter.next();
+        		Node n2 = (Node)atomIter.next();
+        		if (!n1.isLeaf() && !n2.isLeaf()) {
+        			//rotor++;
+				//above here is the rotor identification algorithm; below here is the code that stores the necessary information about the rotor
+				Graph f=Graph.copy(g);//copy the graph so we don't modify the original
+				f.removeArc(f.getArcBetween(n1.getID(), n2.getID()));//this should separate the graph into disconnected pieces (unless it is part of a cycle; if it is part of a cycle, however, this section of code shouldn't be reached)
+				LinkedList pieces = f.partitionWithPreservedIDs();//partition into the two separate graphs
+				Graph sideA = (Graph)pieces.getFirst();
+				Graph sideB = (Graph)pieces.getLast();
+				//look for the piece that has node2
+				if(sideA.getNodeIDs().contains(n2.getID())){
+				    Node atom1 = sideB.getNodeAt(n1.getID());
+				    Node atom2 = sideA.getNodeAt(n2.getID());
+				    Node dihedral1 = (Node)atom1.getNeighboringNodes().iterator().next();//get a neighboring node
+				    Node dihedral2 = (Node)atom2.getNeighboringNodes().iterator().next();//get a neighboring node
+				    int rotorSym = calculateRotorSymmetryNumber(atom1,atom2);
+				    int[] rotorAtoms = {dihedral1.getID(), n1.getID(), n2.getID(), dihedral2.getID(), rotorSym};
+				    rotorInfo.put(rotorAtoms, sideA.getNodeIDs());
+				}
+				else if (sideB.getNodeIDs().contains(n2.getID())){
+				    Node atom1 = sideA.getNodeAt(n1.getID());
+				    Node atom2 = sideB.getNodeAt(n2.getID());
+				    Node dihedral1 = (Node)atom1.getNeighboringNodes().iterator().next();//get a neighboring node
+				    Node dihedral2 = (Node)atom2.getNeighboringNodes().iterator().next();//get a neighboring node
+				    int rotorSym = calculateRotorSymmetryNumber(atom1,atom2);
+				    int[] rotorAtoms = {dihedral1.getID(), n1.getID(), n2.getID(), dihedral2.getID(), rotorSym};
+				    rotorInfo.put(rotorAtoms, sideB.getNodeIDs());
+				}
+				else{
+				    System.out.println("Error in getInternalRotorInformation(): Cannot find node "+ n2.getID()+" after splitting from "+ n1.getID() +" in the following graph:\n"+ g.toString());
+				    System.exit(0);
+				}
+        		}
+        	}
+        }
+
+	return rotorInfo;
+    }
+
 //	## operation isLinear() 
     public boolean isLinear() {
         //#[ operation isLinear() 
@@ -1171,6 +1306,7 @@ return sn;
 			throw e;
 		}
         catch (Exception e) {
+		e.printStackTrace();
         	throw new FailGenerateThermoDataException();
         }
         //#]
@@ -1792,6 +1928,29 @@ return sn;
         	return getToEndOfAxis(nextArc,nextNode,p_axis);
         }
         //#]
+    }
+
+    //find the end of the Ct-Ct-Ct... pattern
+    //based on similar function getToEndOfAxis
+    private static final Node getToEndOfCumulatedTripleBondSystem(Arc p_beginArc, Node p_beginNode, HashSet p_axis) {
+        //#[ operation getToEndOfAxis(Arc,Node,HashSet)
+        Arc nextArc = null;
+        Iterator iter = p_beginNode.getNeighbor();
+        while (iter.hasNext()) {
+        	nextArc = (Arc)iter.next();
+        	if (nextArc != p_beginArc) break;
+        }
+
+        p_axis.add(nextArc);
+
+        Node nextNode = nextArc.getOtherNode(p_beginNode);
+        FGElement fge = (FGElement)nextNode.getFgElement();
+        FGElement Ct = FGElement.make("Ct");
+
+        if (!fge.equals(Ct)) return nextNode;
+        else {
+        	return getToEndOfCumulatedTripleBondSystem(nextArc,nextNode,p_axis);
+        }
     }
 
     /**
