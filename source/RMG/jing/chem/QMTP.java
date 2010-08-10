@@ -321,7 +321,6 @@ public class QMTP implements GeneralGAPP {
 	    }
 	}
 	else{//mm4 case
-	    QMData qmdata = null;
 	    //first, check to see if the result already exists and the job terminated successfully
 	    boolean mm4ResultExists = successfulMM4ResultExistsQ(name,directory,InChIaug);
 	    if(!mm4ResultExists){//if a successful result doesn't exist from previous run (or from this run), run the calculation; if a successful result exists, we will skip directly to parsing the file
@@ -362,13 +361,18 @@ public class QMTP implements GeneralGAPP {
 			attemptNumber++;//try again with new keyword
 		    }
 		}
-		if(useCanTherm) qmdata = performCanThermCalcs(name, directory, p_chemGraph, dihedralMinima);
+		if(useCanTherm){
+		    performCanThermCalcs(name, directory, p_chemGraph, dihedralMinima, false);
+		    if (p_chemGraph.getInternalRotor()>0) performCanThermCalcs(name, directory, p_chemGraph, dihedralMinima, true);//calculate RRHO case for comparison
+		}
+
 	    }
 	    //5. parse MM4 output and record as thermo data (function includes symmetry/point group calcs, etc.)
 	    if(!useCanTherm) result = parseMM4(name, directory, p_chemGraph);
 	    else{
 		//if (qmdata==null) qmdata = getQMDataWithCClib(name, directory, p_chemGraph, true);//get qmdata if it is null (i.e. if a pre-existing successful result exists and it wasn't read in above)
 		result = parseCanThermFile(name, directory, p_chemGraph);
+		if (p_chemGraph.getInternalRotor()>0) parseCanThermFile(name+"_RRHO", directory, p_chemGraph);//print the RRHO result for comparison
 	    }
 	}
         
@@ -1452,14 +1456,14 @@ public class QMTP implements GeneralGAPP {
 
     //parse the results using cclib and CanTherm and return a ThermoData object; name and directory indicate the location of the MM4 .mm4out file
     //formerly known as parseMM4withForceMat
-    public QMData performCanThermCalcs(String name, String directory, ChemGraph p_chemGraph, double[] dihedralMinima){
+    public QMData performCanThermCalcs(String name, String directory, ChemGraph p_chemGraph, double[] dihedralMinima, boolean forceRRHO){
 	//1. parse the MM4 file with cclib to get atomic number vector and geometry
 	QMData qmdata = getQMDataWithCClib(name, directory, p_chemGraph, true);
 	//unpack the needed results
 	double energy = qmdata.energy;
 	double stericEnergy = qmdata.stericEnergy;
 	ArrayList freqs = qmdata.freqs;
-	//2. compute H0/E0;  note that we will compute H0 for CanTherm by H0=Hf298(harmonicMM4)-(H298-H0)harmonicMM4, where harmonicMM4 values come from cclib parsing;  298.16 K is the standard temperature used by MM4; also note that Hthermal should include the R*T contribution (R*298.16 (enthalpy vs. energy difference)) and H0=E0 (T=0)
+	//2. compute H0/E0;  note that we will compute H0 for CanTherm by H0=Hf298(harmonicMM4)-(H298-H0)harmonicMM4, where harmonicMM4 values come from cclib parsing;  298.16 K is the standard temperature used by MM4; also note that Hthermal should include the R*T contribution (R*298.16 (enthalpy vs. energy difference)) and H0=E0 (T=0)	
 	double T_MM4 = 298.16;
 	energy *= Hartree_to_kcal;//convert from Hartree to kcal/mol
 	stericEnergy *= Hartree_to_kcal;//convert from Hartree to kcal/mol
@@ -1485,16 +1489,17 @@ public class QMTP implements GeneralGAPP {
 	else canInp+="NONLINEAR\n";
 	canInp += "GEOM MM4File " + name+".mm4out\n";//geometry file; ***special MM4 treatment in CanTherm; another option would be to use mm4opt file, but CanTherm code would need to be modified accordingly
 	canInp += "FORCEC MM4File "+name+".fmat\n";//force constant file; ***special MM4 treatment in CanTherm
+	if (forceRRHO) name = name + "_RRHO"; //"_RRHO" will be appended to InChIKey for RRHO calcs (though we want to use unmodified name in getQMDataWithCClib above, and in GEOM and FORCEC sections
 	canInp += "ENERGY "+ energy +" MM4\n";//***special MM4 treatment in CanTherm
 	canInp+="EXTSYM "+Math.exp(-sigmaCorr)+"\n";//***modified treatment in CanTherm; traditional EXTSYM integer replaced by EXTSYM double, to allow fractional values that take chirality into account
 	canInp+="NELEC 1\n";//multiplicity = 1; all cases we consider will be non-radicals
 	int rotors = p_chemGraph.getInternalRotor();
 	String rotInput = null;
-	if(!useHindRot || rotors==0) canInp += "ROTORS 0\n";//do not consider hindered rotors
+	if(!useHindRot || rotors==0 || forceRRHO) canInp += "ROTORS 0\n";//do not consider hindered rotors
 	else{
 	    int rotorCount = 0;
 	    canInp+="ROTORS "+rotors+ " "+name+".rotinfo\n";
-	    canInp+="POTENTIAL separable mm4files\n";//***special MM4 treatment in canTherm;
+	    canInp+="POTENTIAL separable mm4files_inertia\n";//***special MM4 treatment in canTherm;
 	    String rotNumbersLine=""+stericEnergy;//the line that will contain V0 (kcal/mol), and all the dihedral minima (degrees)
 	    rotInput = "L1: 1 2 3\n";
 	    LinkedHashMap rotorInfo = p_chemGraph.getInternalRotorInformation();
