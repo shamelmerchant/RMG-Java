@@ -51,17 +51,13 @@ import jing.chemParser.*;
  * listed in the condition.txt file is important).
  * 
  * MRH 9-Jun-2009
+ * 
+ * Trying to add functionality to read in chebychevs in seed mechanism
+ * SSM 25-Aug-2011
+ * 
  */
 
-/*
- * Comments from old PrimaryKineticLibrary:
- * 
- * This is the primary reaction set that any reaction system has to include 
- * into its model.  For example, in combustion system, we build a primary small 
- * molecule reaction set, and every combustion/oxidation system should include 
- * such a primary reaction library.  The reaction / rates are basically from Leeds 
- * methane oxidation mechanism.
- */
+
 
 public class SeedMechanism {
     
@@ -155,7 +151,8 @@ public class SeedMechanism {
 		read: while (line != null) {
 			Reaction r;
 			try {
-				r = ChemParser.parseArrheniusReaction(allSpecies, line, A_multiplier, E_multiplier);
+				System.out.println(line);
+				r = ChemParser.parseArrheniusReaction(allSpecies, line, A_multiplier, E_multiplier,source);
 				r.setKineticsSource(source+ p_name,0);
 				r.setKineticsComments(" ",0);
 				
@@ -263,10 +260,11 @@ public class SeedMechanism {
         	double E_multiplier = multipliers[1];
             
         	String nextLine = ChemParser.readMeaningfulLine(data, true);
+        	System.out.println(nextLine);
 		read: while (nextLine != null) {	
 			Reaction r;
 			try {
-				r = ChemParser.parseArrheniusReaction(allSpecies, nextLine, A_multiplier, E_multiplier);
+				r = ChemParser.parseArrheniusReaction(allSpecies, nextLine, A_multiplier, E_multiplier,source);
 			}
 			catch (InvalidReactionFormatException e) {
 				throw new InvalidReactionFormatException(nextLine + ": " + e.getMessage());
@@ -281,6 +279,7 @@ public class SeedMechanism {
 			 */
 			nextLine = ChemParser.readMeaningfulLine(data, true);
 			boolean continueToReadRxn = true;
+			System.out.println(nextLine);
 			
 			// Initialize all of the possible pdep variables
 			HashMap thirdBodyList = new HashMap();
@@ -330,6 +329,7 @@ public class SeedMechanism {
 						T2star = Double.parseDouble(st.nextToken().trim());
 					}
 					nextLine = ChemParser.readMeaningfulLine(data, true);
+					System.out.println(nextLine);
 				} else if (nextLine.toLowerCase().contains("low")) {
 					// read in lindemann parameters
 					StringTokenizer st = new StringTokenizer(nextLine, "/");
@@ -342,6 +342,7 @@ public class SeedMechanism {
 					 */
 					low = ChemParser.parseSimpleArrheniusKinetics(lowString, A_multiplier, E_multiplier, r.getReactantNumber()+1);
 					nextLine = ChemParser.readMeaningfulLine(data, true);
+					System.out.println(nextLine);
 				} else if (nextLine.contains("CHEB")) {
 					/*
 					 
@@ -372,6 +373,7 @@ public class SeedMechanism {
 					}
 					// Read in the N/M values (number of polynomials in the Temp and Press domain)
 					nextLine = ChemParser.readMeaningfulLine(data, true);
+					System.out.println(nextLine);
 					st_cheb = new StringTokenizer(nextLine,"/");
 					nextToken = st_cheb.nextToken(); // Should be CHEB
 					st_minmax = new StringTokenizer(st_cheb.nextToken());
@@ -379,6 +381,7 @@ public class SeedMechanism {
 					int numM = Integer.parseInt(st_minmax.nextToken());
 					// Read in the coefficients
 					nextLine = ChemParser.readMeaningfulLine(data, true);
+					System.out.println(nextLine);
 					double[] unorderedChebyCoeffs = new double[numN*numM];
 					int chebyCoeffCounter = 0;
 					while (nextLine != null && nextLine.contains("CHEB")) {
@@ -390,6 +393,7 @@ public class SeedMechanism {
 							++chebyCoeffCounter;
 						}
 						nextLine = ChemParser.readMeaningfulLine(data, true);
+						System.out.println(nextLine);
 					}
 					// Order the chebyshev coefficients
 					double[][] chebyCoeffs = new double[numN][numM];
@@ -438,13 +442,16 @@ public class SeedMechanism {
 						pdepkineticsPLOG.setRateCoefficients(previousKinetics);
 						// Read the next line
 						nextLine = ChemParser.readMeaningfulLine(data, true);
+						System.out.println(nextLine);
 					}
+					
 					// read DUPLICATE tag if it's there
 					boolean expecting_duplicate = false;
 					if (nextLine != null && nextLine.toLowerCase().startsWith("dup")) {
 						expecting_duplicate = true;
 						nextLine = ChemParser.readMeaningfulLine(data, true);
 					}
+					
 					// done with this reaction
 					continueToReadRxn = false;
 					
@@ -487,6 +494,7 @@ public class SeedMechanism {
 					// read in third body colliders + efficiencies
 					thirdBodyList.putAll(ChemParser.parseThirdBodyList(nextLine,allSpecies));
 					nextLine = ChemParser.readMeaningfulLine(data, true);
+					System.out.println(nextLine);
 				} else if (nextLine.toLowerCase().startsWith("dup")) {
 					// read DUPLICATE tag
 					throw new InvalidKineticsFormatException("DUPLICATE pdep kinetics only handled for PLOG form. " + r.toString());

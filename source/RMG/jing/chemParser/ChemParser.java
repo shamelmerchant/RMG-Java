@@ -579,7 +579,7 @@ public class ChemParser {
     }
 
   //## operation parseArrheniusReaction(HashMap,String,double,double)
-  public static Reaction parseArrheniusReaction(HashMap p_species, String p_reactionString, double p_AMultiplier, double p_EMultiplier) {
+  public static Reaction parseArrheniusReaction(HashMap p_species, String p_reactionString, double p_AMultiplier, double p_EMultiplier, String p_source) {
       //#[ operation parseArrheniusReaction(HashMap,String,double,double)
       if (p_reactionString == null) throw new NullPointerException("parseArrheniusReaction");
 
@@ -610,8 +610,8 @@ public class ChemParser {
       st = new StringTokenizer(structureString,sep);
       if (st.countTokens() != 2) throw new InvalidStructureException("Unknown format:" + structureString);
 
-      LinkedList r = parseReactionSpecies(p_species, st.nextToken());
-      LinkedList p = parseReactionSpecies(p_species, st.nextToken());
+      LinkedList r = parseReactionSpecies(p_species, st.nextToken(),p_source);
+      LinkedList p = parseReactionSpecies(p_species, st.nextToken(),p_source);
 
       Structure s = new Structure(r,p);
       s.setDirection(1);
@@ -715,7 +715,7 @@ public class ChemParser {
 
 
 	 //## operation parseReactionSpecies(HashMap,String)
-    public static LinkedList parseReactionSpecies(HashMap p_speciesSet, String p_speciesString) {
+    public static LinkedList parseReactionSpecies(HashMap p_speciesSet, String p_speciesString, String p_source) {
         //#[ operation parseReactionSpecies(HashMap,String)
         if (p_speciesString == null) throw new NullPointerException();
 
@@ -750,6 +750,9 @@ public class ChemParser {
         			name = name.substring(0,name.length()-1).trim();
         			origname = name;
         		}
+				
+				
+				
 				/*
 				 * 14Feb2010: MRH adding additional comments
 				 * If the species comes from a Restart file, a (#) will be tacked on at the end of
@@ -758,16 +761,32 @@ public class ChemParser {
 				 *  the speciesSet.
 				 * HOWEVER, some species, e.g. CH2(S), have a () that we want to keep.
 				 */
-				if (name.endsWith(")")) {
-					String[] tempString = name.split("\\(");
-					name = tempString[0];
-					for (int numSplits = 1; numSplits < tempString.length; numSplits++) {
-						if (!tempString[numSplits].toLowerCase().equals(tempString[numSplits].toUpperCase())) {
-							name += "(" + tempString[numSplits];
+				
+				/*
+				 * 30Aug2011: SSM We want to remove the tacked numbers only from restart file and not
+				 * when we are using a seed mechanism. This is especially true when we make seed mech
+				 * using a chemkin file. For now I am just checking whether the source is from seed mechanism
+				 * and to if true ignore MRH code to remove tacked numbers at end of the species  
+				 * 
+				 * I dont know how this affects restart, a better check might be required
+				 */
+				
+				String check = "Seed Mechanism: ";
+				if(!p_source.equals(check)){
+				
+					if (name.endsWith(")")) {
+						String[] tempString = name.split("\\(");
+						name = tempString[0];
+						for (int numSplits = 1; numSplits < tempString.length; numSplits++) {
+							if (!tempString[numSplits].toLowerCase().equals(tempString[numSplits].toUpperCase())) {
+								name += "(" + tempString[numSplits];
+							}
 						}
 					}
 				}
-        		Species spe = (Species)p_speciesSet.get(name);
+				
+        		
+				Species spe = (Species)p_speciesSet.get(name);
         		if (spe == null) {
         			spe = (Species)p_speciesSet.get(origname);
         			if (spe == null) {

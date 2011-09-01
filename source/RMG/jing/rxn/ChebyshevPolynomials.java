@@ -178,8 +178,15 @@ public class ChebyshevPolynomials implements PDepKinetics {
         double Pavg = calculatePAvg(p_pressure);
         
         double result = 0;
-        for (int i = 0; i < NT; i++) {
-        	for (int j = 0; j < NP; j++) {
+        /*
+         *  31Aug2011 SSM: To work with chebychev polynomial of different number of temperature and
+         *  pressure points changing NT and NP variables
+         *  alpha.length = Number of rows, which is number of temperature points
+         *  alpha[0].length = Number of columns which tells number of pressure points
+         */
+        
+        for (int i = 0; i < alpha.length; i++) {
+        	for (int j = 0; j < alpha[0].length; j++) {
         		result += alpha[i][j]*calculatePhi(i+1, Tavg)*calculatePhi(j+1,Pavg);
         	}
         }
@@ -202,22 +209,31 @@ public class ChebyshevPolynomials implements PDepKinetics {
         //#]
     }
     
-    //## operation toChemkinString() 
+     
     public String toChemkinString() {
-        //#[ operation toChemkinString() 
+    	
+    	    	
         String result = "TCHEB / " + Tlow.getK() + " " + Tup.getK() + " /";
         result += "\tPCHEB / " + Plow.getAtm() + " " + Pup.getAtm() + " /\n";
-        result += "CHEB / " + NT + '\t' + NP + " /\n";
-        for (int i = 0; i < NT; i++) {
+        result += "CHEB / " + alpha.length + '\t' + alpha[0].length + " /\n";
+        
+        /*
+         *  31Aug2011 SSM: To work with chebychev polynomial of different number of temperature and
+         *  pressure points changing NT and NP variables
+         *  alpha.length = Number of rows, which is number of temperature points
+         *  alpha[0].length = Number of columns which tells number of pressure points
+         */
+        
+        for (int i = 0; i < alpha.length; i++) {
         	result += "CHEB / ";
-        	for (int j = 0; j < NP; j++) {
+        	for (int j = 0; j < alpha[0].length; j++) {
         		result += String.format("% 1.7e",alpha[i][j]) + " ";
         	}
         	result += "/\n";
         }
         return result;
         
-        //#]
+        
     }
     
     public static int getNP() {
