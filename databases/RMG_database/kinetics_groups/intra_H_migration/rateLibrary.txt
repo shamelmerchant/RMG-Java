@@ -321,3 +321,13 @@ Arrhenius_EP
 1003		R4H_SSS			C_rad_out_H/NonDeC		Cs_H_out_H/NonDeS	300-1500	6.96E+05        1.95            0.0             19.26   0       0       0       0       3	CAC CBS-QB3 calc 1dhr
 1004		R5H_SSSS                C_rad_out_H/NonDeC              Cs_H_out_H/NonDeS	300-1500	5.31E+05        1.58            0.0             12.07   0       0       0       0       3	CAC CBS-QB3 calc 1dhr
 1005		R3H_SS			O_rad_out			S_H_out			300-1500	4.99E+11	0.26		0.0		15.99	0	0	0	0	3	CAC CBS-QB3 calc 1dhr
+
+// Adding intra H migrations for ROO = QOOH for butanol, these rates have been calculated by Oliver Welz CBS-QB3 calculations
+1006 R5H_SSSS  O_rad_out  O_H_out                               300-1500	7.717E+10	0.066		0.0		20.37	0	0	0	0	3
+1007  R4H_SSS_OO(Cs/Cs)Cs  O_rad_out  Cs_H_out_H/NonDeO         300-1500	3.9E-2	3.709		0.0		18.57	0	0	0	0	3
+1008  R4H_SSS_OO(Cs/Cs)Cs O_rad_out  Cs_H_out_H/NonDeC          300-1500	1E-11	6.57		0.0		18.7	0	0	0	0	3
+1009 R5H_SSSS_OO(Cs/Cs)Cs O_rad_out  Cs_H_out_2H                300-1500	5.38E+2	2.404		0.0		18.35	0	0	0	0	3
+1010 R6H_SSSSS  O_rad_out  O_H_out                              300-1500	4.609E+4	1.485		0.0		24.38	0	0	0	0	3
+1011  R5H_SSSS_OO(Cs/Cs)Cs  O_rad_out  Cs_H_out_H/NonDeO        300-1500	1.47E+1	2.662		0.0		12.59	0	0	0	0	3
+1012  R4H_SSS_OO(Cs/Cs)Cs  O_rad_out  Cs_H_out_H/NonDeC         300-1500	8E-10	5.973		0.0		20.8	0	0	0	0	3
+1013 R4H_SSS_OO(Cs/Cs)Cs  O_rad_out  Cs_H_out_2H                300-1500	2.148E-13	6.937	0.0		21.9	0	0	0	0	3
