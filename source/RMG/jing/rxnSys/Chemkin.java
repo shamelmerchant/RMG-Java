@@ -639,7 +639,7 @@ public  Chemkin() {
       		if (rxn.reactantEqualsProduct()) continue;
 			if (pDepList.contains(rxn) || pDepList.contains(rxn.getReverseReaction())) continue;
 			if (seedList.contains(rxn) || seedList.contains(rxn.getReverseReaction())) continue;
-                        if (nonPDepList.contains(rxn) || nonPDepList.contains(rxn.getReverseReaction())) continue;
+            //if (nonPDepList.contains(rxn) || nonPDepList.contains(rxn.getReverseReaction())) continue;
 			
 			// Made it through all the tests.
 			pDepList.add(rxn);
@@ -688,10 +688,17 @@ public  Chemkin() {
 
       CoreEdgeReactionModel cerm = (CoreEdgeReactionModel)p_reactionModel;
 
-      // write inert gas
+      // always write Ar, N2, Ne, He
+      result.append("\tAr\n");
+      result.append("\tN2\n");
+      result.append("\tNe\n");
+      result.append("\tHe\n");
+      
+      // write other inert gases
       for (Iterator iter = p_beginStatus.getInertGas(); iter.hasNext();) {
       	String name = (String)iter.next();
-      	result.append('\t' + name + '\n');
+      	if (!(name.equals("Ar") || name.equals("N2") || name.equals("Ne") || name.equals("He")))
+      	    result.append('\t' + name + '\n');
       }
 
       // write species
@@ -772,6 +779,13 @@ public  Chemkin() {
 
       	if (spe.getNasaThermoSource() != null) {
       		result.append("!" + spe.getNasaThermoSource() + "\n");
+      	}
+      	
+      	String thermoComm = spe.getChemGraph().getThermoComments().replace("\n", "");
+      	String [] pieces = thermoComm.split("(?<=\\G.{80})");//80 characters width
+      	for(String piece: pieces){
+      		if(!piece.equals(""))
+      			result.append("!"+piece+"\n");
       	}
       	/*
       	 * MRH 2MAR2010:

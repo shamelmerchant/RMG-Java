@@ -113,6 +113,7 @@ public class ReactionModelGenerator {
 	//static {System.loadLibrary("cpuTime");}
 
 	public static boolean rerunFame = false;
+	public static boolean qmVerbose = false;
 
 	protected static double tolerance;//can be interpreted as "coreTol" (vs. edgeTol)
 	protected static double termTol;
@@ -471,24 +472,14 @@ public class ReactionModelGenerator {
         		StringTokenizer st = new StringTokenizer(line);
         		String name = st.nextToken();
         		String thermoMethod = st.nextToken().toLowerCase();
-        		if (thermoMethod.equals("qm")) {
-        			ChemGraph.useQM = true;
-					if(st.hasMoreTokens()){//override the default qmprogram ("both") if there are more; current options: "gaussian03" and "mopac" and of course, "both"
+        		ChemGraph.TDMETHOD = thermoMethod;
+        		if (thermoMethod.contains("qm")||thermoMethod.contains("hybrid")) {
+        			if(st.hasMoreTokens()){//override the default qmprogram ("both") if there are more; current options: "gaussian03" and "mopac" and of course, "both"
 					    QMTP.qmprogram = st.nextToken().toLowerCase();
 					}
-					line=ChemParser.readMeaningfulLine(reader, true);
-					if(line.startsWith("QMForCyclicsOnly:")){
-						StringTokenizer st2 = new StringTokenizer(line);
-						String nameCyc = st2.nextToken();
-						String option = st2.nextToken().toLowerCase();
-						if (option.equals("on")) {
-							ChemGraph.useQMonCyclicsOnly = true;
-						}
-					}
-					else{
-						Logger.critical("condition.txt: Can't find 'QMForCyclicsOnly:' field");
-						System.exit(0);
-					}
+					//line=ChemParser.readMeaningfulLine(reader, true);
+				
+					
 					line=ChemParser.readMeaningfulLine(reader, true);
 					if(line.startsWith("MaxRadNumForQM:")){
 						StringTokenizer st3 = new StringTokenizer(line);
@@ -523,8 +514,28 @@ public class ReactionModelGenerator {
 						Logger.critical("condition.txt: Can't find 'CheckConnectivity:' field (should be 'off', 'check', or 'confirm')");
 						System.exit(0);
 					}
+					line = ChemParser.readMeaningfulLine(reader, true); //read in either QM 'Verbose:' option or 'InitialStatus' line.
+					if (line.startsWith("Verbose:")){
+						StringTokenizer st5 = new StringTokenizer(line);
+						String nameQmVerbose = st5.nextToken(); //String Verbose
+						String checkQmVerbose = st5.nextToken().toLowerCase();
+						if (checkQmVerbose.equals("on")){
+							QMTP.qmfolder = "QMfiles/";
+							QMTP.qmVerbose = true;
+						}
+						else if(!checkQmVerbose.equals("off")){
+							Logger.critical("condition.txt: QMTP 'Verbose' field should be 'on' or 'off'");
+							System.exit(0);
+						}
+						// Read another line
+						line = ChemParser.readMeaningfulLine(reader, true);
+					}
+					else{
+						Logger.critical("Can't find QMTP 'Verbose:' field. Defaulting to 'off'.");
+						QMTP.qmVerbose = false;
+					}
         		}//otherwise, the flag useQM will remain false by default and the traditional group additivity approach will be used
-				line = ChemParser.readMeaningfulLine(reader, true);//read in reactants
+
 			}
             
 			//            // Read in Solvation effects
@@ -1434,7 +1445,7 @@ public class ReactionModelGenerator {
             reactionChangedList.set(i,false);
         }
         //9/1/09 gmagoon: if we are using QM, output a file with the CHEMKIN name, the RMG name, the (modified) InChI, and the (modified) InChIKey
-        if (ChemGraph.useQM){
+        if (! ChemGraph.TDMETHOD.contains("benson")){
             writeInChIs(getReactionModel());      
         }
         writeDictionary(getReactionModel());
@@ -1564,7 +1575,7 @@ public class ReactionModelGenerator {
 				startTime = System.currentTimeMillis();
 
 				//9/1/09 gmagoon: if we are using QM, output a file with the CHEMKIN name, the RMG name, the (modified) InChI, and the (modified) InChIKey
-				if (ChemGraph.useQM){
+				if (!ChemGraph.TDMETHOD.contains("benson")){
 					writeInChIs(getReactionModel());                    
 				}
 				writeDictionary(getReactionModel());
@@ -1578,9 +1589,10 @@ public class ReactionModelGenerator {
 					 */
 					String[] restartFiles = {"Restart/coreReactions.txt", "Restart/coreSpecies.txt",
 							"Restart/edgeReactions.txt", "Restart/edgeSpecies.txt",
-							"Restart/pdepnetworks.txt", "Restart/pdepreactions.txt"};
+							"Restart/pdepnetworks.txt", "Restart/pdepreactions.txt","Restart/restartConditionFile.txt"};
 					writeBackupRestartFiles(restartFiles);
 					
+					writeRestartConditionFile();
 					writeCoreSpecies();
 					writeCoreReactions();
 					writeEdgeSpecies();
@@ -1732,9 +1744,10 @@ public class ReactionModelGenerator {
 			 */
 			String[] restartFiles = {"Restart/coreReactions.txt", "Restart/coreSpecies.txt",
 					"Restart/edgeReactions.txt", "Restart/edgeSpecies.txt",
-					"Restart/pdepnetworks.txt", "Restart/pdepreactions.txt"};
+					"Restart/pdepnetworks.txt", "Restart/pdepreactions.txt","Restart/restartConditionFile.txt"};
 			writeBackupRestartFiles(restartFiles);
 			
+			writeRestartConditionFile();
 			writeCoreSpecies();
 			writeCoreReactions();
 			writeEdgeSpecies();
@@ -1791,14 +1804,172 @@ public class ReactionModelGenerator {
 		Chemkin.writeChemkinInputFile(getReactionModel(),rs.getPresentStatus()); 
 		
         //9/1/09 gmagoon: if we are using QM, output a file with the CHEMKIN name, the RMG name, the (modified) InChI, and the (modified) InChIKey
-        if (ChemGraph.useQM){
+        if (!ChemGraph.TDMETHOD.contains("benson")){
             writeInChIs(getReactionModel());    
         }
 		
         writeDictionary(getReactionModel());
     }
     
-    //9/1/09 gmagoon: this function writes a "dictionary" with Chemkin name, RMG name, (modified) InChI, and InChIKey
+    private void writeRestartConditionFile() {
+    	StringBuilder restartConditionFile = new StringBuilder();
+    	
+		// Read in the condition file 
+		
+		try {
+			String initialConditionFile = System.getProperty("jing.rxnSys.ReactionModelGenerator.conditionFile");
+			FileReader condition_file = new FileReader(initialConditionFile);
+			BufferedReader condition_file_br = new BufferedReader(condition_file);
+			
+			String line = ChemParser.readMeaningfulAndEmptyLine(condition_file_br, true);
+			
+			// Read lines from condition file and store them in the string till
+			// you reach the species definition 
+			
+			while (!line.equals("InitialStatus:")) {
+				
+				restartConditionFile.append(line+"\n");				
+			
+				line = ChemParser.readMeaningfulAndEmptyLine(condition_file_br, true);
+			}
+			
+			restartConditionFile.append(line+"\n");
+			
+			// Read in the next line
+			line = ChemParser.readMeaningfulLine(condition_file_br, true);
+
+			
+			// Read in the species in the initial condition file  
+			// and figure out the number of concentrations specified and units
+			
+			String unit="";
+			int numSpeciesConditionfile = 0;
+			int numConcentrations = 0;
+			
+			// This blocks reads in the initial species in condition file
+			while (line != null && !line.equals("END")) {
+				
+				StringTokenizer st = new StringTokenizer(line);
+				String index = st.nextToken();
+				String name = null;
+				if (!index.startsWith("(")) name = index;
+				else name = st.nextToken();
+				 
+				
+				// The next token will be the concentration units
+				unit = st.nextToken();
+				
+				
+				// The remaining tokens are the either token unreactive, constant concentrations
+				// or concentrations for the species
+				
+				// The number of concentrations
+				numConcentrations = 0;
+				
+				while (st.hasMoreTokens()) {
+					String reactive = st.nextToken().trim();
+					
+					// Dont count the unreactive and constantconcentration tokens
+					if(!reactive.equalsIgnoreCase("unreactive")||!reactive.equalsIgnoreCase("constantconcentration"))
+						++numConcentrations;				
+
+				}
+				
+				restartConditionFile.append(line+"\n");			
+				
+				Graph g;
+				try {
+					g = ChemParser.readChemGraph(condition_file_br);
+					ChemGraph cg = null;
+					try {
+						cg = ChemGraph.make(g);
+						restartConditionFile.append(cg.toStringWithoutH(0)+"\n");
+					}
+					catch(ForbiddenStructureException e){
+						
+					}
+				} 
+				catch (IOException e1) {
+	                System.out.println("Something wrong with graph");
+	                System.exit(0);
+				}
+						
+			
+				// increment species counter
+				++ numSpeciesConditionfile;
+				
+				line = ChemParser.readMeaningfulLine(condition_file_br, true);
+			}
+			
+			
+			// Creates an array initialized with default value of double 0.0, with size of numConcentrations
+			double[] ConcArray = new double[numConcentrations];
+			String ConcString = ArraytoString(ConcArray);
+
+			
+			// Read in dictionary and append the units and 0.0 for number of concentrations
+			// *** Strictly assuming that species in condition file are the initial species
+			// in the RMG_Dictionary ***
+			
+			int speciestoSkip=1;
+			
+			Iterator iter=getReactionModel().getSpecies();
+			
+			while(iter.hasNext()){
+				Species spe = (Species) iter.next();
+                if(speciestoSkip>numSpeciesConditionfile){
+                	// Append the name + units + concentrations as 0.0
+                	restartConditionFile.append(spe.getChemkinName()+" "+unit+" "+ConcString+"\n");
+                	// Append the Chemgraph
+                	restartConditionFile.append(spe.getChemGraph().toString(0)+"\n");
+                }
+                ++speciestoSkip;
+                	              
+			}
+			
+			// Read lines till end of condition file 
+			while (line !=null) {
+				restartConditionFile.append(line+"\n");				
+				
+				line = ChemParser.readMeaningfulAndEmptyLine(condition_file_br, true);
+			}
+			
+            // Write the restartConditionFile.txt output file
+            try {
+            	
+            	String filename = "Restart/restartConditionFile.txt";           	
+            	
+				File rxns = new File(filename);
+				FileWriter fw_rxns = new FileWriter(rxns);
+                fw_rxns.write(restartConditionFile.toString());
+                fw_rxns.close();
+            }
+            
+            catch (IOException e) {
+                System.out.println("Could not write restartCondition.txt file");
+                System.exit(0);
+            }
+			
+		}
+		
+		catch (FileNotFoundException e) {
+			System.err.println("Condition file not found");
+			}
+					
+	}
+
+	private String ArraytoString(double[] concArray) {	
+		    StringBuilder sb = new StringBuilder();
+		    for (int i = 0; i < concArray.length; i++)
+		    {
+		        if (i != 0)
+		            sb.append(" ");
+		        sb.append(concArray[i]);
+		    }
+		    return sb.toString();
+	}
+
+	//9/1/09 gmagoon: this function writes a "dictionary" with Chemkin name, RMG name, (modified) InChI, and InChIKey
     //this is based off of writeChemkinFile in ChemkinInputFile.java
     private void writeInChIs(ReactionModel p_reactionModel) {
         StringBuilder result=new StringBuilder();
@@ -1834,7 +2005,7 @@ public class ReactionModelGenerator {
 			while (iter.hasNext()){
 				int i=1;
 				Species spe = (Species) iter.next();
-				coreSpecies = coreSpecies + spe.getChemkinName() + " " + spe.getInChI() + "\n"+spe.getChemGraph().toString(i)+"\n\n";
+				coreSpecies = coreSpecies + spe.getChemkinName() + " " + spe.getChemGraph().getModifiedInChIAnew() + "\n"+spe.getChemGraph().toString(i)+"\n\n";
 			}
 		} else {
 			while (iter.hasNext()){
@@ -2590,6 +2761,7 @@ public class ReactionModelGenerator {
 //		}
 //	}
 	
+	
 	private void writeCoreSpecies() {
 		BufferedWriter bw = null;
 		Logger.info("Writing Restart Core Species");
@@ -2762,8 +2934,8 @@ public class ReactionModelGenerator {
             bw = new BufferedWriter(new FileWriter("Restart/pdepnetworks.txt"));
     		int numFameTemps = PDepRateConstant.getTemperatures().length;
     		int numFamePress = PDepRateConstant.getPressures().length;
-    		int numChebyTemps = ChebyshevPolynomials.getNT();
-    		int numChebyPress = ChebyshevPolynomials.getNP();
+    		int numChebyTemps = ChebyshevPolynomials.getDefaultNT();
+    		int numChebyPress = ChebyshevPolynomials.getDefaultNP();
     		//int numPlog = PDepArrheniusKinetics.getNumPressures();
 			int numPlog = numFamePress; // probably often the case for FAME-generated PLOG rates (but not for seed or library reactions)
     		String EaUnits = ArrheniusKinetics.getEaUnits();
@@ -3534,8 +3706,8 @@ public class ReactionModelGenerator {
 				}
 			}
 			ChebyshevPolynomials chebyshev = new ChebyshevPolynomials(numChebyTs,
-																	  ChebyshevPolynomials.getTlow(), ChebyshevPolynomials.getTup(),
-																	  numChebyPs, ChebyshevPolynomials.getPlow(), ChebyshevPolynomials.getPup(),
+																	  ChebyshevPolynomials.getDefaultTlow(), ChebyshevPolynomials.getDefaultTup(),
+																	  numChebyPs, ChebyshevPolynomials.getDefaultPlow(), ChebyshevPolynomials.getDefaultPup(),
 																	  chebyPolys);
 			pdepk = new PDepRateConstant(rateCoefficients,chebyshev);
 		} else if (numPlogs > 0) {
@@ -3690,13 +3862,13 @@ public class ReactionModelGenerator {
 				Iterator iter = reactionSet.iterator();
 	        	while (iter.hasNext()){
 	        		Reaction r = (Reaction)iter.next();
-	        		if (r.getReactantNumber() > 1 && r.getProductNumber() > 1){
+	        		if (FastMasterEqn.isReactionPressureDependent(r)) {
+	        		    cerm.categorizeReaction(r.getStructure());
+                        PDepNetwork.addReactionToNetworks(r);
+	        		}
+	        		else {
 	        			cerm.addReaction(r);
 	        		}
-					else {
-						cerm.categorizeReaction(r.getStructure());
-						PDepNetwork.addReactionToNetworks(r);
-					}
 				}
 			}
 		}
@@ -3776,13 +3948,13 @@ public class ReactionModelGenerator {
 				Iterator iter = reactionSet.iterator();
 	        	while (iter.hasNext()){
 	        		Reaction r = (Reaction)iter.next();
-	        		if (r.getReactantNumber() > 1 && r.getProductNumber() > 1){
+	        		if (FastMasterEqn.isReactionPressureDependent(r)) {
+	        		    cerm.categorizeReaction(r.getStructure());
+                        PDepNetwork.addReactionToNetworks(r);
+	        		}
+	        		else {
 	        			cerm.addReaction(r);
 	        		}
-					else {
-						cerm.categorizeReaction(r.getStructure());
-						PDepNetwork.addReactionToNetworks(r);
-					}
 				}
 			}
 		}
@@ -3875,13 +4047,13 @@ public class ReactionModelGenerator {
 			Iterator iter = reactionSet.iterator();
         	while (iter.hasNext()){
         		Reaction r = (Reaction)iter.next();
-        		if (r.getReactantNumber() > 1 && r.getProductNumber() > 1){
+        		if (FastMasterEqn.isReactionPressureDependent(r)) {
+        		    cerm.categorizeReaction(r.getStructure());
+                    PDepNetwork.addReactionToNetworks(r);
+        		}
+        		else {
         			cerm.addReaction(r);
         		}
-				else {
-					cerm.categorizeReaction(r.getStructure());
-					PDepNetwork.addReactionToNetworks(r);
-				}
 			}
 		}
         
@@ -4581,9 +4753,20 @@ public class ReactionModelGenerator {
 				Logger.warning("Switching SpectroscopicDataEstimator to three-frequency model.");
 				SpectroscopicData.mode = SpectroscopicData.Mode.THREEFREQUENCY;
 			}
-
-			// Next line must be PDepKineticsModel
+			
+			// Optional: MaxAtomsForPressureDependence
 			line = ChemParser.readMeaningfulLine(reader, true);
+            if (line.toLowerCase().startsWith("maxatomsforpressuredependence:")) {
+                st = new StringTokenizer(line);
+                name = st.nextToken();
+                
+                int atoms = Integer.parseInt(st.nextToken());
+                FastMasterEqn.setMaxAtoms(atoms);
+                
+                line = ChemParser.readMeaningfulLine(reader, true);
+            }
+            
+			// Next line must be PDepKineticsModel
 			if (line.toLowerCase().startsWith("pdepkineticsmodel:")) {
 				
 				st = new StringTokenizer(line);
@@ -4743,14 +4926,14 @@ public class ReactionModelGenerator {
 			PDepRateConstant.setTemperatures(temperatures);
 			PDepRateConstant.setTMin(Tmin);
 			PDepRateConstant.setTMax(Tmax);
-			ChebyshevPolynomials.setTlow(Tmin);
-			ChebyshevPolynomials.setTup(Tmax);
+			ChebyshevPolynomials.setDefaultTlow(Tmin);
+			ChebyshevPolynomials.setDefaultTup(Tmax);
 			FastMasterEqn.setPressures(pressures);
 			PDepRateConstant.setPressures(pressures);
 			PDepRateConstant.setPMin(Pmin);
 			PDepRateConstant.setPMax(Pmax);
-			ChebyshevPolynomials.setPlow(Pmin);
-			ChebyshevPolynomials.setPup(Pmax);
+			ChebyshevPolynomials.setDefaultPlow(Pmin);
+			ChebyshevPolynomials.setDefaultPup(Pmax);
 			
 			/*
 			 * New option for input file: DecreaseGrainSize
@@ -4789,14 +4972,14 @@ public class ReactionModelGenerator {
 			//read first temperature
 			double t = Double.parseDouble(st.nextToken());
 			tempList.add(new ConstantTM(t, unit));
-			Temperature temp = new Temperature(t, unit);//10/29/07 gmagoon: added this line and next two lines to set Global.lowTemperature and Global.highTemperature
+			Temperature temp = new Temperature(t, unit);
 			Global.lowTemperature = (Temperature)temp.clone();
 			Global.highTemperature = (Temperature)temp.clone();
 			//read remaining temperatures
 			while (st.hasMoreTokens()) {
 				t = Double.parseDouble(st.nextToken());
 				tempList.add(new ConstantTM(t, unit));
-				temp = new Temperature(t,unit);//10/29/07 gmagoon: added this line and next two "if" statements to set Global.lowTemperature and Global.highTemperature
+				temp = new Temperature(t,unit);
 				if(temp.getK() < Global.lowTemperature.getK())
 					Global.lowTemperature = (Temperature)temp.clone();
 				if(temp.getK() > Global.highTemperature.getK())

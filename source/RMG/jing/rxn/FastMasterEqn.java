@@ -113,6 +113,13 @@ public class FastMasterEqn implements PDepKineticsEstimator {
 	 * 	fame-computed k(T,P)
 	 */
 	private static boolean pdepRatesOK = true;
+	
+	/**
+	 * The number of atoms above which to skip pressure dependence. By default
+	 * this is set to an arbitrarily large value so that pressure dependence
+	 * is always run.
+	 */
+	private static int maxAtoms = 100000;
 
 	//==========================================================================
 	//
@@ -681,8 +688,13 @@ public class FastMasterEqn implements PDepKineticsEstimator {
 				input.append( "\n\n" );
 			}
 
+			int numberOfPathReactions = 0;
+			for (int i = 0; i < pathReactionList.size(); i++) {
+				PDepReaction rxn = pathReactionList.get(i);
+				numberOfPathReactions += rxn.getKinetics().length;
+			}
 			input.append( "# The number of reactions in the network (minimum of 2)\n" );
-			input.append( Integer.toString(pathReactionList.size()) + "\n" );
+			input.append( Integer.toString(numberOfPathReactions) + "\n" );
 			input.append( "\n" );
 
 			for (int i = 0; i < pathReactionList.size(); i++) {
@@ -694,41 +706,46 @@ public class FastMasterEqn implements PDepKineticsEstimator {
                     throw new PDepException("Encountered a path reaction that was not a forward reaction!");
 
                 double A = 0.0, Ea = 0.0, n = 0.0;
-				Temperature stdtemp = new Temperature(298,"K");
-                double Hrxn = rxn.calculateHrxn(stdtemp);
                 Kinetics[] k_array = rxn.getKinetics();
-                Kinetics kin = computeKUsingLeastSquares(k_array, Hrxn);
-                A = kin.getAValue();
-                n = kin.getNValue();
-                Ea = kin.getEValue();//kin should be ArrheniusKinetics (rather than ArrheniusEPKinetics), so it should be correct to use getEValue here (similarly for other uses in this file)
+                for (int j = 0; j < k_array.length; j++) {
+                	Kinetics kin = k_array[j];
+                	
+                    A = kin.getAValue();
+                    n = kin.getNValue();
+                    Ea = kin.getEValue();//kin should be ArrheniusKinetics (rather than ArrheniusEPKinetics), so it should be correct to use getEValue here (similarly for other uses in this file)
 
-				input.append( "# The reaction equation, in the form A + B --> C + D\n" );
-				input.append( rxn.toString() + "\n" );
-
-				input.append( "# Indices of the reactant and product isomers, starting with 1\n" );
-				input.append( Integer.toString(isomerList.indexOf(rxn.getReactant()) + 1) + " " );
-				input.append( Integer.toString(isomerList.indexOf(rxn.getProduct()) + 1) + "\n" );
-
-				input.append( "# Ground-state energy; allowed units are J/mol, kJ/mol, cal/mol, kcal/mol, or cm^-1\n" );
-				if (Ea < 0.0)
-					input.append( "J/mol " + Double.toString((rxn.getReactant().calculateH(stdTemp)) * 4184) + "\n" );
-				else
-					input.append( "J/mol " + Double.toString((Ea + rxn.getReactant().calculateH(stdTemp)) * 4184) + "\n" );
-
-				input.append( "# High-pressure-limit kinetics model k(T):\n" );
-				input.append( "#	Option 1: Arrhenius\n" );
-				input.append( "# 	Arrhenius preexponential factor ; allowed units are combinations of volume {m^3, L, or cm^3} and time {s^-1}\n" );
-				input.append( "# 	Arrhenius activation energy ; allowed units are J/mol, kJ/mol, cal/mol, or kcal/mol\n" );
-				input.append( "# 	Arrhenius temperature exponent\n" );
-				input.append( "Arrhenius\n" );
-				if (rxn.getReactant().isUnimolecular())
-					input.append( "s^-1 " + Double.toString(A) + "\n" );
-				else if (rxn.getReactant().isMultimolecular())
-					input.append( "m^3/mol*s " + Double.toString(A * 1.0e-6) + "\n" );
-				input.append( "J/mol " + Double.toString(Ea * 4184) + "\n" );
-				input.append( Double.toString(n) + "\n" );
-
-				input.append( "\n" );
+                    if (A == 0 && n == 0 && Ea == 0)
+                        throw new PDepException("Path reaction " + rxn.toString() + " has an A, n, and Ea of zero, which would cause FAME to crash.");   
+                    
+    				input.append( "# The reaction equation, in the form A + B --> C + D\n" );
+    				input.append( rxn.toString() + "\n" );
+    
+    				input.append( "# Indices of the reactant and product isomers, starting with 1\n" );
+    				input.append( Integer.toString(isomerList.indexOf(rxn.getReactant()) + 1) + " " );
+    				input.append( Integer.toString(isomerList.indexOf(rxn.getProduct()) + 1) + "\n" );
+    
+    				input.append( "# Ground-state energy; allowed units are J/mol, kJ/mol, cal/mol, kcal/mol, or cm^-1\n" );
+    				if (Ea < 0.0)
+    					input.append( "J/mol " + Double.toString((rxn.getReactant().calculateH(stdTemp)) * 4184) + "\n" );
+    				else
+    					input.append( "J/mol " + Double.toString((Ea + rxn.getReactant().calculateH(stdTemp)) * 4184) + "\n" );
+    
+    				input.append( "# High-pressure-limit kinetics model k(T):\n" );
+    				input.append( "#	Option 1: Arrhenius\n" );
+    				input.append( "# 	Arrhenius preexponential factor ; allowed units are combinations of volume {m^3, L, or cm^3} and time {s^-1}\n" );
+    				input.append( "# 	Arrhenius activation energy ; allowed units are J/mol, kJ/mol, cal/mol, or kcal/mol\n" );
+    				input.append( "# 	Arrhenius temperature exponent\n" );
+    				input.append( "Arrhenius\n" );
+    				if (rxn.getReactant().isUnimolecular())
+    					input.append( "s^-1 " + Double.toString(A) + "\n" );
+    				else if (rxn.getReactant().isMultimolecular())
+    					input.append( "m^3/mol*s " + Double.toString(A * 1.0e-6) + "\n" );
+    				input.append( "J/mol " + Double.toString(Ea * 4184) + "\n" );
+    				input.append( Double.toString(n) + "\n" );
+    
+    				input.append( "\n" );
+    				
+                }
 			}
 
 		}
@@ -1224,6 +1241,38 @@ public class FastMasterEqn implements PDepKineticsEstimator {
 		numPBasisFuncs = m;
 	}
 	
+    /**
+     * Return the number of atoms above which pressure dependence is assumed
+     * to be negligible.
+     */
+    public static int getMaxAtoms() {
+        return maxAtoms;
+    }
+    
+    /**
+     * Set the number of atoms above which pressure dependence is assumed
+     * to be negligible. To always run pressure dependence, set this to a very
+     * large number.
+     */
+    public static void setMaxAtoms(int atoms) {
+        maxAtoms = atoms;
+    }
+    
+    /**
+     * Return true if the given reaction should be considered as a pressure
+     * dependent reaction or false otherwise. A pressure dependent reaction
+     * has the form A -> B, A -> B + C, or A + B -> C with a total number of
+     * atoms below a certain threshold. 
+     * @param reaction The reaction to assess
+     * @return true if the reaction should be considered as pressure dependent, false otherwise
+     */
+    public static boolean isReactionPressureDependent(Reaction reaction) {
+        if (reaction.getAtomNumber() > maxAtoms)
+            return false;
+        else
+            return (reaction.getReactantNumber() == 1 || reaction.getProductNumber() == 1);
+    }
+
 	public static Kinetics computeKUsingLeastSquares(Kinetics[] k_array, double Hrxn) {
         /*
          * MRH 24MAR2010:

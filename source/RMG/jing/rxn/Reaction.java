@@ -1152,6 +1152,10 @@ public class Reaction {
       return getStructure().getRedundancy();
       //#]
   }
+  
+  	public void setRedundancy(int redundancy) {
+  		getStructure().setRedundancy(redundancy);
+  	}
 
 	 public boolean hasResonanceIsomer() {
 	        //#[ operation hasResonanceIsomer()
@@ -1673,6 +1677,18 @@ public class Reaction {
 			setReverseReaction(null);
 		}
 		
+	}
+	
+	/**
+	 * Return the total number of atoms in the reactants (and products).
+	 */
+	public int getAtomNumber() {
+	    int atoms = 0;
+	    for (ListIterator<Species> iter = getReactants(); iter.hasNext(); ) {
+	        Species spe = iter.next();
+	        atoms += spe.getChemGraph().getAtomNumber();
+	    }
+	    return atoms;
 	}
 
 }

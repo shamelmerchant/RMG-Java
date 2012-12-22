@@ -250,6 +250,23 @@ public class ReactionTemplate {
           k = ArrheniusKinetics.average(kSet);
       	if (k==null) return null;
       	kineticsTemplateLibrary.addKinetics(key,k);
+      	/*System.out.print("Added averaged rate rule for: ");
+      	for (Iterator key_iter = key.iterator(); key_iter.hasNext(); ) {
+      		Object next = key_iter.next();
+      		if (next instanceof FunctionalGroup) {
+	      		FunctionalGroup fg = (FunctionalGroup) next;
+	      		System.out.print(fg.getName());
+	      		if (key_iter.hasNext())
+	      			System.out.print(";");
+      		}
+      		else if (next instanceof FunctionalGroupCollection) {
+      			FunctionalGroupCollection fg = (FunctionalGroupCollection) next;
+	      		System.out.print(fg.getName());
+	      		if (key_iter.hasNext())
+	      			System.out.print(";");
+      		}
+      	}
+      	System.out.println();*/
       }
       
       return k;
@@ -1084,31 +1101,8 @@ public class ReactionTemplate {
 							}
 						}
       			}
-		if (reverseReaction == null) {
-		  System.out.println("DEBUGGING INFO FOR ISSUE #239:");
-		  System.out.println("structure.equalsAsChemGraph(p_structure):"+structure.equalsAsChemGraph(p_structure));
-		  System.out.println("structure:"+structure);
-		  System.out.println("p_structure:"+p_structure);
-		  ChemGraph cg = (ChemGraph)structure.reactants.iterator().next();
-		  System.out.println("structure reactant:"+ cg);
-		  System.out.println("structure reactant has resonanceIsomers:"+ cg.getSpecies().hasResonanceIsomers());
-		  cg = (ChemGraph)p_structure.reactants.iterator().next();
-		  System.out.println("p_structure reactant:"+ cg);
-		  System.out.println("p_structure reactant has resonanceIsomers:"+ cg.getSpecies().hasResonanceIsomers());
-		  cg = (ChemGraph)structure.products.iterator().next();
-		  System.out.println("structure product:"+ cg);
-		  System.out.println("structure product has resonanceIsomers:"+ cg.getSpecies().hasResonanceIsomers());
-		  cg = (ChemGraph)p_structure.products.iterator().next();
-		  System.out.println("p_structure product:"+ cg);
-		  System.out.println("p_structure product has resonanceIsomers:"+ cg.getSpecies().hasResonanceIsomers());
-		}
       		}
-	if (reverseReaction == null) {
-	  System.out.println("DEBUGGING INFO FOR ISSUE #239:");
-	  System.out.println("rpsame:"+rpsame);
-	  System.out.println("p_chemGraph:"+p_chemGraph);
-	  System.out.println("p_structure:"+p_structure);
-      }
+
           }
           catch (ForbiddenStructureException e) {
           	// do the next reaction site
@@ -1293,6 +1287,10 @@ public class ReactionTemplate {
       String TreeName = directoryName + "tree.txt";
       String LibraryName = directoryName + "rateLibrary.txt";
       String ForbiddenName = directoryName + "forbiddenGroups.txt";
+      
+      /*if (p_reactionTemplateName.equals("R_Recombination")) {
+    	  System.out.print("");
+      }*/
       
       try {
       	readFGDictionary(DictionaryName);

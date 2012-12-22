@@ -64,12 +64,13 @@ PressureModel: Constant (atm) 1
 // *** This option is still under construction ***
 //Solvation: off/on
 
-// RMG currently only recognizes "QM", bracketed field is optional and defaults to "both"
 // *** This option is still under construction ***
-//ThermoMethod: QM [gaussian03/mopac/both/mm4/mm4hr]
-// If previous field is on and set to "QM", the next two fields are required
-//QMForCyclicsOnly: on/off
+//thermo strategy, thermo method ? [BensonOnly/QMforCyclics/Hybrid] [gaussian03/mopac/both/mm4/mm4hr]
+//ThermoMethod: Hybrid [gaussian03/mopac/both/mm4/mm4hr]
+// If previous field is on and set to "qm" or "hybrid", the next two fields are required
 //MaxRadNumForQM: 0
+//CheckConnectivity? [off/check/confirm]
+//CheckConnectivity: check
 
 InitialStatus:
 
@@ -112,6 +113,10 @@ END
 
 SpectroscopicDataEstimator: off/frequencygroups
 PressureDependence: off/reservoirstate/modifiedstrongcollision
+// If PressureDependence field is not set to "off", you can optionally specify a
+// threshold number of atoms above which pressure dependence is not run
+// The recommended value for this depends on temperature and pressure
+// MaxAtomsForPressureDependence: 16
 // If PressureDependence field is not set to "off", the PDepKineticsModel field must be present
 // If chebyshev chosen, you can also specify the number of basis functions, e.g. "chebyshev 4 4"
 //PDepKineticsModel: chebyshev/pdeparrhenius/rate

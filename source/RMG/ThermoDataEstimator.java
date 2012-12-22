@@ -83,9 +83,8 @@ public class ThermoDataEstimator {
 			qmflags = readQMFlags(reader);		
 
 			Global.maxRadNumForQM = qmflags.maxRadNumForQM.intValue();
-			ChemGraph.useQM = qmflags.qmActive.booleanValue();
+			ChemGraph.TDMETHOD = qmflags.TDSTRATEGY;
 			QMTP.qmprogram = qmflags.method.toLowerCase();
-			ChemGraph.useQMonCyclicsOnly = qmflags.qmOnCyclicsOnly.booleanValue();
 			QMTP.connectivityCheck = qmflags.connectivityCheck.intValue();
 
 			readAtomConstraints(reader);
@@ -219,6 +218,7 @@ public class ThermoDataEstimator {
 		createFolder("2Dmolfiles", true);   // Not sure if we should be deleting this
 		createFolder("3Dmolfiles", true);   // Not sure if we should be deleting this
 		createFolder("QMfiles", false);     // Preserving QM files between runs will speed things up considerably
+		createFolder("QMThermoLibrary", false);
 	}
 
 	/**
@@ -230,14 +230,11 @@ public class ThermoDataEstimator {
 		QMFlags qmFlags = new QMFlags();
 
 		String line = ChemParser.readMeaningfulLine(reader, true);
-		qmFlags.qmActive = Boolean.parseBoolean(line);
+		qmFlags.TDSTRATEGY = line;
 
 		line = ChemParser.readMeaningfulLine(reader, true);
 		qmFlags.method = line;
-
-		line = ChemParser.readMeaningfulLine(reader, true);
-		qmFlags.qmOnCyclicsOnly = Boolean.parseBoolean(line);
-
+		
 		line = ChemParser.readMeaningfulLine(reader, true);
 		qmFlags.maxRadNumForQM = Integer.parseInt(line);
 
