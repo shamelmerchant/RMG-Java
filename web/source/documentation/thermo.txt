@@ -1,4 +1,4 @@
-**********************************
+﻿**********************************
 Estimating Species Thermochemistry
 **********************************
 
@@ -12,7 +12,7 @@ Since the accuracy of Benson GA for acyclic molecules is generally superior than
 For cyclic molecules 3 different strategies can be chosen:
 1. BensonOnly
 2. QMforCyclics
-3. Hybrid [default]
+3. Hybrid
 
 The BensonOnly strategy only uses the Benson Group Additivity framework to estimate thermochemistry of species. 
 For compounds containing one or more rings, it identifies the smallest set of smallest rings in the molecules and perceives whether fused ring atoms are present,
@@ -23,8 +23,11 @@ If an apt ring correction is not found, a warning is printed, but the thermochem
 The QMforCyclics strategy preferentially choses the on-the-fly semi-empirical methods to estimate thermochemistry. If repeated failures occur for the QM methods,
 this strategy falls back to the BensonOnly strategy.
 
-The hybrid strategy is the default option used in RMG. First, the Benson databases are searched for an adequate (polycyclic) ring correction. If such a correction is not found, 
+In the hybrid strategy, first, the Benson databases are searched for an adequate (polycyclic) ring correction. If such a correction is not found, 
 this strategy falls back to the QMforCyclics strategy.
+
+The thermochemistry calculated from on-the-fly quantum methods are now saved to $RMG_QM_LIBRARY, which defaults as QMThermoLibrary in the working directory.
+These results can be inputted into subsequent RMG runs by copying QMThermoLibrary from a previous run into the working directory of the new run.
 
 The ``ThermoDataEstimator`` utility produces thermochemistry estimates without running RMG.
 
@@ -43,31 +46,38 @@ Instructions for Use
    	//thermo strategy? [BensonOnly/QMforCyclics/Hybrid]
    	Hybrid
    
-   The QM package to be used, is specified: either choose "both", "gaussian03", "mopac", 
-   "mm4", or "mm4hr"
-   e.g.::
+   The following lines are not required if the ``BensonOnly`` flag is used:
 
-   	//QM method: [both/gaussian03/mopac/mm4/mm4hr] 
-   	gaussian03
-   
-   
-   Limit the use of on-the-fly methods to only species with less than the specified number
-   of unpaired electrons. E.g. "0", implies that radical species will not computed using
-   on-the-fly QM methods.
-   e.g.::
+       The QM package to be used, is specified: either choose "both", "gaussian03", "mopac", 
+       "mm4", or "mm4hr"
+       e.g.::
 
-   	//maxradnumforQM?
-   	0  
-   
-   A check of the connectivity of the passed-in 3D structure can be performed ensuring
-   that the quantumchemical data returned by the QM package is based on a 3D structure with
-   correct connectivity. 
-   e.g.::
-   
-    //CheckConnectivity? [off/check/confirm]
-    check
-    
-    
+       	//QM method: [both/gaussian03/mopac/mm4/mm4hr] 
+       	gaussian03
+       
+       
+       Limit the use of on-the-fly methods to only species with less than the specified number
+       of unpaired electrons. E.g. "0", implies that radical species will not computed using
+       on-the-fly QM methods.
+       e.g.::
+
+       	//maxradnumforQM?
+       	0  
+       
+       A check of the connectivity of the passed-in 3D structure can be performed ensuring
+       that the quantumchemical data returned by the QM package is based on a 3D structure with
+       correct connectivity. 
+       e.g.::
+       
+           //CheckConnectivity? [off/check/confirm]
+           check
+        
+       Specify whether to keep all output files from Gaussian03 or Mopac. If no enviornment
+       variable for qmCalculationsDir is set, the output files will be kept in $WorkDir/QMFiles. 
+
+           //KeepQMFiles? [yes/no]
+           yes
+ 
    The next section allows the user to set atom constraints on the species to be processed
    by the ThermoDataEstimator, beyond the default values hard-coded in TDE. 
    Only species that satisfy the set atom constraints, will be processed by TDE.
