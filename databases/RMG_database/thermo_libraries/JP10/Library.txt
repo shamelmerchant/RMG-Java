@@ -50,6 +50,8 @@ JR7BS4			41.82   98.86   39.63   53.99   66.76   77.37   93.44   104.9   122.93 
 C5dC5_1			-4.45	99.59   39.29   54.38   67.97   79.28   96.4    108.57  126.74	0.0	0.0	0.0	Aaron Vandeputte, H from RMG Benson, S and Cp from QM
 C5dC5_2			-2.8	98.31	39.1	54.37	68.1	79.42	96.6	108.7	126.8 	0.0	0.0	0.0	Aaron Vandeputte, H from CBS-QB3 reaction scheme, S and Cp from QM (QM estimates -13.17 kcal/mol for this component, once more illustrating that it does not work for unsaturated cyclics, RMG Benson estimates -3.4 kcal/mol -> slightly lower due to missing gauche corrections)
 C5dC5_3			-3.59	96.51   39.09   54.37   68.07   79.43   96.57   108.72  126.84 	0.0     0.0     0.0    	Aaron Vandeputte, H from RMG Benson, S and Cp from QM	
-
+C1CCCdC2CCCdC21		15.55   94.46   38.37   52.07   64.55   75.14   91.39   102.81  119.13	0.0     0.0     0.0     Aaron Vandeputte, add 10 kcal mol-1
+CdC1CCdCC2CCCC12	20.8    96.93   37.4    51.38   64.03   74.74   91.12   102.62  119.03  0.0	0.0	0.0	Aaron Vandeputte, add 10 kcal mol-1
+CC1dC2CCCdC2CCC1	11.19   96.58   38.68   52.24   64.63   75.18   91.41   102.83  119.14 	0.0     0.0     0.0     Aaron Vandeputte, add 10 kcal mol-1
 
 
