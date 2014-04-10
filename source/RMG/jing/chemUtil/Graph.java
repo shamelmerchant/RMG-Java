@@ -513,6 +513,21 @@ public class Graph {
         // #]
     }
 
+
+    public boolean inBiRing(Node node1) {
+    int count = 0;
+    for (int i = 0; i < SSSRings.size(); i++) {
+        LinkedList cycle = (LinkedList) SSSRings.get(i);
+        if(cycle.contains(node1)) {
+	    count++;
+            }
+        }
+    if(count >= 2) 
+	return true;
+    else
+	return false;
+    }
+
     public boolean sameRing(Node node1, Node node2) { 
 
     for (int i = 0; i < SSSRings.size(); i++) {
@@ -1940,7 +1955,7 @@ public class Graph {
 	    return node1.minimumPath(node2, pathlist);
     }
 
-    public int countCyclicsAlongMinDis (Node node1, Node node2) {
+    public int countCyclicsAlongMinPathInSameRing (Node node1, Node node2) {
 	    LinkedHashSet pathlist = new LinkedHashSet();
 	    LinkedHashSet minpath = node1.minimumPath(node2, pathlist);
 	    Iterator it = minpath.iterator();
@@ -1954,7 +1969,6 @@ public class Graph {
 		}	
 	    return ncyclics;
     }
-
 
     /**
      * Set the visited status of all the graph components in this graph as the pass-in p_visited.<br>

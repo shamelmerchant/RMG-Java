@@ -490,11 +490,11 @@ public class ReactionTemplate {
 			    double mindis = ((double) mindistance + 1.0)/2.0;
 
 //			    System.out.println("Minimum distance "+mindis);
-//			    System.out.println("Count cyclics for node 1 "+rcg.getGraph().countCyclicsAlongMinDis(n1, n2));
-//			    System.out.println("Count cyclics for node 2 "+rcg.getGraph().countCyclicsAlongMinDis(n2, n1));
+//			    System.out.println("Count cyclics for node 1 "+rcg.getGraph().countCyclicsAlongMinPathInSameRing(n1, n2));
+//			    System.out.println("Count cyclics for node 2 "+rcg.getGraph().countCyclicsAlongMinPathInSameRing(n2, n1));
 
-			    if (rcg.getGraph().countCyclicsAlongMinDis(n1, n2)-1 >= mindis) {failtest1 = true;}
-			    if (rcg.getGraph().countCyclicsAlongMinDis(n2, n1)-1 >= mindis) {failtest2 = true;}
+			    if (rcg.getGraph().countCyclicsAlongMinPathInSameRing(n1, n2)-1 >= mindis) {failtest1 = true;}
+			    if (rcg.getGraph().countCyclicsAlongMinPathInSameRing(n2, n1)-1 >= mindis) {failtest2 = true;}
 
 			    if (mindistance > 1 ) {
 			        if ((rcg.getGraph().sameRing(n1, n2)) || failtest1 || failtest2 ) {
@@ -511,6 +511,32 @@ public class ReactionTemplate {
 	            	}
 	            	
 	            } // end intraHmigration loop
+
+		    if (name.equals("Intra_Diels_alder2")) {
+
+			ChemGraph rcg = (ChemGraph) ((p_structure.getReactants()).next());
+			Graph reactant = rcg.getGraph();
+
+			int nbicyclics = 0;
+			Node n1 = new Node();
+			for (int temp = 1; temp <= 6; temp++) {	
+			     n1 = rcg.getCentralNodeAt(temp);
+			     if(reactant.inBiRing(n1)) {
+				nbicyclics++;
+				}
+			}
+
+			System.out.println("Number of cyclics "+nbicyclics);
+
+			if(nbicyclics >2) {
+			   k = new Kinetics[1];
+			   UncertainDouble uncertd = new UncertainDouble(0.0, 1.0,"Multiplier");
+			   ArrheniusKinetics zero = new ArrheniusKinetics(uncertd, uncertd, uncertd,"Unknown", 5, name, "Forbidden");
+			   k[0] = zero;
+			   return k;
+			}
+		    } // end Intra_Diels_alder2
+
             }
 
 
