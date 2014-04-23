@@ -56,10 +56,10 @@ C     -   GENERATED: Wed Jan 31 02:02:16 2007
      $   thirdbodyreactionsize,lindereactionsize
       common /reac/ reactionratearray(5*rmax),
      $   thirdbodyreactionratearray(16*tbrmax),troereactionratearray(
-     $   21*troemax),temperature,pressure,reactionarray(10*rmax),
-     $   thirdbodyreactionarray(21*tbrmax),troereactionarray(22*
+     $   21*troemax),temperature,pressure,reactionarray(11*rmax),
+     $   thirdbodyreactionarray(22*tbrmax),troereactionarray(23*
      $   troemax),lindereactionratearray(17*lindemax),
-     $   lindereactionarray(21*lindemax)
+     $   lindereactionarray(22*lindemax)
 C        zzzderiv - partial derivative array stored in sparse matrix
 C                   format, pattern contained in zzzirn and zzzjcn.
 C        zzzne    - number of entries in zzzderiv.
@@ -235,10 +235,10 @@ C     Done
      $   thirdbodyreactionsize,lindereactionsize
       common /reac/ reactionratearray(5*rmax),
      $   thirdbodyreactionratearray(16*tbrmax),troereactionratearray(
-     $   21*troemax),temperature,pressure,reactionarray(10*rmax),
-     $   thirdbodyreactionarray(21*tbrmax),troereactionarray(22*
+     $   21*troemax),temperature,pressure,reactionarray(11*rmax),
+     $   thirdbodyreactionarray(22*tbrmax),troereactionarray(23*
      $   troemax),lindereactionratearray(17*lindemax),
-     $   lindereactionarray(21*lindemax)
+     $   lindereactionarray(22*lindemax)
 C     Additional arguments for partial derivative construction
 C        zzziw - integer workspace
       integer zzziw(*)
@@ -365,14 +365,14 @@ C
          frate=rpar(i+1)
          call SVZ(frateoft+1,2)
 C     
-         rnum=reactionarray(10*i+1)
-         pnum=reactionarray(10*i+2)
+         rnum=reactionarray(11*i+1)
+         pnum=reactionarray(11*i+2)
          dg=0
          do j=1,rnum
-            dg=dg-thermo(reactionarray(10*i+2+j))
+            dg=dg-thermo(reactionarray(11*i+2+j))
          end do
          do j=1,pnum
-            dg=dg+thermo(reactionarray(10*i+5+j))
+            dg=dg+thermo(reactionarray(11*i+5+j))
          end do
          zzzv2=-dg
          zzzv4=zzzv2*4184
@@ -391,7 +391,7 @@ C
          keq=zzzv16
          call DSVM1(keqoft+1,2,zzzvbar7,temperatureoft+1,3)
 C     
-         if(reactionarray(10*i+10)==1) then
+         if(reactionarray(11*i+11)==1) then
             zzzv3=rpar(i+1)/keq
             zzzvbar2=-zzzv3/keq
             rrate=zzzv3
@@ -403,45 +403,45 @@ C
 C     
          end if
          do j=1,rnum
-            zzzv3=frate*y(reactionarray(10*i+2+j))
+            zzzv3=frate*y(reactionarray(11*i+2+j))
             zzzvbar2=frate
-            zzzvbar1=y(reactionarray(10*i+2+j))
+            zzzvbar1=y(reactionarray(11*i+2+j))
             frate=zzzv3
-            call DSVM2(frateoft+1,2,zzzvbar2,yoft+reactionarray(10*i+2+
+            call DSVM2(frateoft+1,2,zzzvbar2,yoft+reactionarray(11*i+2+
      $         j),2,zzzvbar1,frateoft+1,2)
 C     
          end do
          do j=1,pnum
-            zzzv3=rrate*y(reactionarray(10*i+5+j))
+            zzzv3=rrate*y(reactionarray(11*i+5+j))
             zzzvbar2=rrate
-            zzzvbar1=y(reactionarray(10*i+5+j))
+            zzzvbar1=y(reactionarray(11*i+5+j))
             rrate=zzzv3
-            call DSVM2(rrateoft+1,2,zzzvbar2,yoft+reactionarray(10*i+5+
+            call DSVM2(rrateoft+1,2,zzzvbar2,yoft+reactionarray(11*i+5+
      $         j),2,zzzvbar1,rrateoft+1,2)
 C     
          end do
          do j=1,rnum
-            zzzv3=del(reactionarray(10*i+2+j))-frate
+            zzzv3=del(reactionarray(11*i+2+j))-frate
             zzzv5=zzzv3+rrate
             zzzvbar4=1.0d0
             zzzvbar2=-1.0d0
             zzzvbar1=1.0d0
-            del(reactionarray(10*i+2+j))=zzzv5
-            call DSVM3(deloft+reactionarray(10*i+2+j),zzzsvm2,zzzvbar4,
+            del(reactionarray(11*i+2+j))=zzzv5
+            call DSVM3(deloft+reactionarray(11*i+2+j),zzzsvm2,zzzvbar4,
      $         rrateoft+1,2,zzzvbar2,frateoft+1,2,zzzvbar1,deloft+
-     $         reactionarray(10*i+2+j),zzzsvm2)
+     $         reactionarray(11*i+2+j),zzzsvm2)
 C     
          end do
          do j=1,pnum
-            zzzv3=del(reactionarray(10*i+5+j))+frate
+            zzzv3=del(reactionarray(11*i+5+j))+frate
             zzzv5=zzzv3-rrate
             zzzvbar4=-1.0d0
             zzzvbar2=1.0d0
             zzzvbar1=1.0d0
-            del(reactionarray(10*i+5+j))=zzzv5
-            call DSVM3(deloft+reactionarray(10*i+5+j),zzzsvm2,zzzvbar4,
+            del(reactionarray(11*i+5+j))=zzzv5
+            call DSVM3(deloft+reactionarray(11*i+5+j),zzzsvm2,zzzvbar4,
      $         rrateoft+1,2,zzzvbar2,frateoft+1,2,zzzvbar1,deloft+
-     $         reactionarray(10*i+5+j),zzzsvm2)
+     $         reactionarray(11*i+5+j),zzzsvm2)
 C     
          end do
       end do
@@ -449,14 +449,14 @@ C
          frate=rpar(reactionsize+i+1)
          call SVZ(frateoft+1,2)
 C     
-         rnum=thirdbodyreactionarray(i*21+1)
-         pnum=thirdbodyreactionarray(i*21+2)
+         rnum=thirdbodyreactionarray(i*22+1)
+         pnum=thirdbodyreactionarray(i*22+2)
          dg=0
          do j=1,rnum
-            dg=dg-thermo(thirdbodyreactionarray(21*i+2+j))
+            dg=dg-thermo(thirdbodyreactionarray(22*i+2+j))
          end do
          do j=1,pnum
-            dg=dg+thermo(thirdbodyreactionarray(21*i+5+j))
+            dg=dg+thermo(thirdbodyreactionarray(22*i+5+j))
          end do
          zzzv2=-dg
          zzzv4=zzzv2*4184
@@ -486,19 +486,19 @@ C
          call DSVM2(inertefficiencyoft+1,2,zzzvbar6,temperatureoft+1,3
      $      ,zzzvbar1,pressureoft+1,3)
 C     
-         numcollider=thirdbodyreactionarray(i*21+11)
+         numcollider=thirdbodyreactionarray(i*22+12)
          do j=1,numcollider
             zzzv5=thirdbodyreactionratearray(16*i+6+j)-1
-            zzzv6=y(thirdbodyreactionarray(i*21+11+j))*zzzv5
+            zzzv6=y(thirdbodyreactionarray(i*22+12+j))*zzzv5
             zzzv7=inertefficiency+zzzv6
-            zzzvbar5=y(thirdbodyreactionarray(i*21+11+j))
+            zzzvbar5=y(thirdbodyreactionarray(i*22+12+j))
             zzzvbar3=zzzvbar5
             zzzvbar2=zzzv5
             zzzvbar1=1.0d0
             inertefficiency=zzzv7
             call DSVM3(inertefficiencyoft+1,2,zzzvbar3,
      $         thirdbodyreactionratearrayoft+16*i+6+j,3,zzzvbar2,yoft+
-     $         thirdbodyreactionarray(i*21+11+j),2,zzzvbar1,
+     $         thirdbodyreactionarray(i*22+12+j),2,zzzvbar1,
      $         inertefficiencyoft+1,2)
 C     
          end do
@@ -509,7 +509,7 @@ C
          call DSVM2(frateoft+1,2,zzzvbar2,inertefficiencyoft+1,2,
      $      zzzvbar1,frateoft+1,2)
 C     
-         if(thirdbodyreactionarray(21*i+10)==1) then
+         if(thirdbodyreactionarray(22*i+11)==1) then
             zzzv3=frate/keq
             zzzvbar2=-zzzv3/keq
             zzzvbar1=1.0d0/keq
@@ -523,59 +523,59 @@ C
 C     
          end if
          do j=1,rnum
-            zzzv3=frate*y(thirdbodyreactionarray(21*i+2+j))
+            zzzv3=frate*y(thirdbodyreactionarray(22*i+2+j))
             zzzvbar2=frate
-            zzzvbar1=y(thirdbodyreactionarray(21*i+2+j))
+            zzzvbar1=y(thirdbodyreactionarray(22*i+2+j))
             frate=zzzv3
             call DSVM2(frateoft+1,2,zzzvbar2,yoft+
-     $         thirdbodyreactionarray(21*i+2+j),2,zzzvbar1,frateoft+1,
+     $         thirdbodyreactionarray(22*i+2+j),2,zzzvbar1,frateoft+1,
      $         2)
 C     
          end do
          do j=1,pnum
-            zzzv3=rrate*y(thirdbodyreactionarray(21*i+5+j))
+            zzzv3=rrate*y(thirdbodyreactionarray(22*i+5+j))
             zzzvbar2=rrate
-            zzzvbar1=y(thirdbodyreactionarray(21*i+5+j))
+            zzzvbar1=y(thirdbodyreactionarray(22*i+5+j))
             rrate=zzzv3
             call DSVM2(rrateoft+1,2,zzzvbar2,yoft+
-     $         thirdbodyreactionarray(21*i+5+j),2,zzzvbar1,rrateoft+1,
+     $         thirdbodyreactionarray(22*i+5+j),2,zzzvbar1,rrateoft+1,
      $         2)
 C     
          end do
          do j=1,rnum
-            zzzv3=del(thirdbodyreactionarray(21*i+2+j))-frate
+            zzzv3=del(thirdbodyreactionarray(22*i+2+j))-frate
             zzzv5=zzzv3+rrate
             zzzvbar4=1.0d0
             zzzvbar2=-1.0d0
             zzzvbar1=1.0d0
-            del(thirdbodyreactionarray(21*i+2+j))=zzzv5
-            call DSVM3(deloft+thirdbodyreactionarray(21*i+2+j),zzzsvm2
+            del(thirdbodyreactionarray(22*i+2+j))=zzzv5
+            call DSVM3(deloft+thirdbodyreactionarray(22*i+2+j),zzzsvm2
      $         ,zzzvbar4,rrateoft+1,2,zzzvbar2,frateoft+1,2,zzzvbar1,
-     $         deloft+thirdbodyreactionarray(21*i+2+j),zzzsvm2)
+     $         deloft+thirdbodyreactionarray(22*i+2+j),zzzsvm2)
 C     
          end do
          do j=1,pnum
-            zzzv3=del(thirdbodyreactionarray(21*i+5+j))+frate
+            zzzv3=del(thirdbodyreactionarray(22*i+5+j))+frate
             zzzv5=zzzv3-rrate
             zzzvbar4=-1.0d0
             zzzvbar2=1.0d0
             zzzvbar1=1.0d0
-            del(thirdbodyreactionarray(21*i+5+j))=zzzv5
-            call DSVM3(deloft+thirdbodyreactionarray(21*i+5+j),zzzsvm2
+            del(thirdbodyreactionarray(22*i+5+j))=zzzv5
+            call DSVM3(deloft+thirdbodyreactionarray(22*i+5+j),zzzsvm2
      $         ,zzzvbar4,rrateoft+1,2,zzzvbar2,frateoft+1,2,zzzvbar1,
-     $         deloft+thirdbodyreactionarray(21*i+5+j),zzzsvm2)
+     $         deloft+thirdbodyreactionarray(22*i+5+j),zzzsvm2)
 C     
          end do
       end do
       do i=0,troereactionsize-1
-         rnum=troereactionarray(i*22+1)
-         pnum=troereactionarray(i*22+2)
+         rnum=troereactionarray(i*23+1)
+         pnum=troereactionarray(i*23+2)
          dg=0
          do j=1,rnum
-            dg=dg-thermo(troereactionarray(22*i+2+j))
+            dg=dg-thermo(troereactionarray(23*i+2+j))
          end do
          do j=1,pnum
-            dg=dg+thermo(troereactionarray(22*i+5+j))
+            dg=dg+thermo(troereactionarray(23*i+5+j))
          end do
          zzzv2=-dg
          zzzv4=zzzv2*4184
@@ -605,18 +605,18 @@ C
          call DSVM2(moft+1,2,zzzvbar6,temperatureoft+1,3,zzzvbar1,
      $      pressureoft+1,3)
 C     
-         numcollider=troereactionarray(i*22+11)
+         numcollider=troereactionarray(i*23+12)
          do j=1,numcollider
             zzzv5=troereactionratearray(21*i+6+j)-1
-            zzzv6=y(troereactionarray(i*22+11+j))*zzzv5
+            zzzv6=y(troereactionarray(i*23+12+j))*zzzv5
             zzzv7=m+zzzv6
-            zzzvbar5=y(troereactionarray(i*22+11+j))
+            zzzvbar5=y(troereactionarray(i*23+12+j))
             zzzvbar3=zzzvbar5
             zzzvbar2=zzzv5
             zzzvbar1=1.0d0
             m=zzzv7
             call DSVM3(moft+1,2,zzzvbar3,troereactionratearrayoft+21*i
-     $         +6+j,3,zzzvbar2,yoft+troereactionarray(i*22+11+j),2,
+     $         +6+j,3,zzzvbar2,yoft+troereactionarray(i*23+12+j),2,
      $         zzzvbar1,moft+1,2)
 C     
          end do
@@ -646,8 +646,8 @@ C
      $      +21,3)
 C     
          rate=rpar(reactionsize+thirdbodyreactionsize+i+1)
-         direction=troereactionarray(22*i+10)
-         if(troereactionarray(22*i+22)==0) then
+         direction=troereactionarray(23*i+11)
+         if(troereactionarray(23*i+23)==0) then
             zzzv3=1-alpha
             zzzv5=-temperature
             zzzv7=zzzv5/t3star
@@ -680,7 +680,7 @@ C
      $         temperatureoft+1,3,zzzvbar2,alphaoft+1,2)
 C     
          else
-            if(troereactionarray(22*i+22)==1) then
+            if(troereactionarray(23*i+23)==1) then
                zzzv3=1-alpha
                zzzv5=-temperature
                zzzv7=zzzv5/t3star
@@ -813,7 +813,7 @@ C
      $         zzzvbar2,proft+1,2)
          end if
 C     
-         if(troereactionarray(22*i+10)==1) then
+         if(troereactionarray(23*i+11)==1) then
             zzzv3=frate/keq
             zzzvbar2=-zzzv3/keq
             zzzvbar1=1.0d0/keq
@@ -827,58 +827,58 @@ C
 C     
          end if
          do j=1,rnum
-            zzzv3=frate*y(troereactionarray(22*i+2+j))
+            zzzv3=frate*y(troereactionarray(23*i+2+j))
             zzzvbar2=frate
-            zzzvbar1=y(troereactionarray(22*i+2+j))
+            zzzvbar1=y(troereactionarray(23*i+2+j))
             frate=zzzv3
             call DSVM2(frateoft+1,2,zzzvbar2,yoft+troereactionarray(21
      $         *i+2+j),2,zzzvbar1,frateoft+1,2)
 C     
          end do
          do j=1,pnum
-            zzzv3=rrate*y(troereactionarray(22*i+5+j))
+            zzzv3=rrate*y(troereactionarray(23*i+5+j))
             zzzvbar2=rrate
-            zzzvbar1=y(troereactionarray(22*i+5+j))
+            zzzvbar1=y(troereactionarray(23*i+5+j))
             rrate=zzzv3
             call DSVM2(rrateoft+1,2,zzzvbar2,yoft+troereactionarray(21
      $         *i+5+j),2,zzzvbar1,rrateoft+1,2)
 C     
          end do
          do j=1,rnum
-            zzzv3=del(troereactionarray(22*i+2+j))-frate
+            zzzv3=del(troereactionarray(23*i+2+j))-frate
             zzzv5=zzzv3+rrate
             zzzvbar4=1.0d0
             zzzvbar2=-1.0d0
             zzzvbar1=1.0d0
-            del(troereactionarray(22*i+2+j))=zzzv5
-            call DSVM3(deloft+troereactionarray(22*i+2+j),zzzsvm2,
+            del(troereactionarray(23*i+2+j))=zzzv5
+            call DSVM3(deloft+troereactionarray(23*i+2+j),zzzsvm2,
      $         zzzvbar4,rrateoft+1,2,zzzvbar2,frateoft+1,2,zzzvbar1,
-     $         deloft+troereactionarray(22*i+2+j),zzzsvm2)
+     $         deloft+troereactionarray(23*i+2+j),zzzsvm2)
 C     
          end do
          do j=1,pnum
-            zzzv3=del(troereactionarray(22*i+5+j))+frate
+            zzzv3=del(troereactionarray(23*i+5+j))+frate
             zzzv5=zzzv3-rrate
             zzzvbar4=-1.0d0
             zzzvbar2=1.0d0
             zzzvbar1=1.0d0
-            del(troereactionarray(22*i+5+j))=zzzv5
-            call DSVM3(deloft+troereactionarray(22*i+5+j),zzzsvm2,
+            del(troereactionarray(23*i+5+j))=zzzv5
+            call DSVM3(deloft+troereactionarray(23*i+5+j),zzzsvm2,
      $         zzzvbar4,rrateoft+1,2,zzzvbar2,frateoft+1,2,zzzvbar1,
-     $         deloft+troereactionarray(22*i+5+j),zzzsvm2)
+     $         deloft+troereactionarray(23*i+5+j),zzzsvm2)
 C     
          end do
       end do
 
       do i=0,lindereactionsize-1
-         rnum=lindereactionarray(i*21+1)
-         pnum=lindereactionarray(i*21+2)
+         rnum=lindereactionarray(i*22+1)
+         pnum=lindereactionarray(i*22+2)
          dg=0
          do j=1,rnum
-            dg=dg-thermo(lindereactionarray(21*i+2+j))
+            dg=dg-thermo(lindereactionarray(22*i+2+j))
          end do
          do j=1,pnum
-            dg=dg+thermo(lindereactionarray(21*i+5+j))
+            dg=dg+thermo(lindereactionarray(22*i+5+j))
          end do
          zzzv2=-dg
          zzzv4=zzzv2*4184
@@ -908,18 +908,18 @@ C
          call DSVM2(moft+1,2,zzzvbar6,temperatureoft+1,3,zzzvbar1,
      $      pressureoft+1,3)
 C     
-         numcollider=lindereactionarray(i*21+11)
+         numcollider=lindereactionarray(i*22+12)
          do j=1,numcollider
             zzzv5=lindereactionratearray(17*i+6+j)-1
-            zzzv6=y(lindereactionarray(i*21+11+j))*zzzv5
+            zzzv6=y(lindereactionarray(i*22+12+j))*zzzv5
             zzzv7=m+zzzv6
-            zzzvbar5=y(lindereactionarray(i*21+11+j))
+            zzzvbar5=y(lindereactionarray(i*22+12+j))
             zzzvbar3=zzzvbar5
             zzzvbar2=zzzv5
             zzzvbar1=1.0d0
             m=zzzv7
             call DSVM3(moft+1,2,zzzvbar3,lindereactionratearrayoft+17*i
-     $         +6+j,3,zzzvbar2,yoft+lindereactionarray(i*21+11+j),2,
+     $         +6+j,3,zzzvbar2,yoft+lindereactionarray(i*22+12+j),2,
      $         zzzvbar1,moft+1,2)
 C     
          end do
@@ -931,7 +931,7 @@ C
 C     
          rate=rpar(reactionsize+thirdbodyreactionsize+troereactionsize
      $      +i+1)
-         direction=lindereactionarray(21*i+10)
+         direction=lindereactionarray(22*i+11)
 C     
          if (rnum .gt. 1 .and. pnum .gt. 1) then
             zzzv4=1+pr
@@ -951,7 +951,7 @@ C
             call DSVM1(frateoft+1,2,zzzvbar2,proft+1,2)
          end if
 C     
-         if(lindereactionarray(21*i+10)==1) then
+         if(lindereactionarray(22*i+11)==1) then
             zzzv3=frate/keq
             zzzvbar2=-zzzv3/keq
             zzzvbar1=1.0d0/keq
@@ -965,45 +965,45 @@ C
 C     
          end if
          do j=1,rnum
-            zzzv3=frate*y(lindereactionarray(21*i+2+j))
+            zzzv3=frate*y(lindereactionarray(22*i+2+j))
             zzzvbar2=frate
-            zzzvbar1=y(lindereactionarray(21*i+2+j))
+            zzzvbar1=y(lindereactionarray(22*i+2+j))
             frate=zzzv3
             call DSVM2(frateoft+1,2,zzzvbar2,yoft+lindereactionarray(20
      $         *i+2+j),2,zzzvbar1,frateoft+1,2)
 C     
          end do
          do j=1,pnum
-            zzzv3=rrate*y(lindereactionarray(21*i+5+j))
+            zzzv3=rrate*y(lindereactionarray(22*i+5+j))
             zzzvbar2=rrate
-            zzzvbar1=y(lindereactionarray(21*i+5+j))
+            zzzvbar1=y(lindereactionarray(22*i+5+j))
             rrate=zzzv3
             call DSVM2(rrateoft+1,2,zzzvbar2,yoft+lindereactionarray(20
      $         *i+5+j),2,zzzvbar1,rrateoft+1,2)
 C     
          end do
          do j=1,rnum
-            zzzv3=del(lindereactionarray(21*i+2+j))-frate
+            zzzv3=del(lindereactionarray(22*i+2+j))-frate
             zzzv5=zzzv3+rrate
             zzzvbar4=1.0d0
             zzzvbar2=-1.0d0
             zzzvbar1=1.0d0
-            del(lindereactionarray(21*i+2+j))=zzzv5
-            call DSVM3(deloft+lindereactionarray(21*i+2+j),zzzsvm2,
+            del(lindereactionarray(22*i+2+j))=zzzv5
+            call DSVM3(deloft+lindereactionarray(22*i+2+j),zzzsvm2,
      $         zzzvbar4,rrateoft+1,2,zzzvbar2,frateoft+1,2,zzzvbar1,
-     $         deloft+lindereactionarray(21*i+2+j),zzzsvm2)
+     $         deloft+lindereactionarray(22*i+2+j),zzzsvm2)
 C     
          end do
          do j=1,pnum
-            zzzv3=del(lindereactionarray(21*i+5+j))+frate
+            zzzv3=del(lindereactionarray(22*i+5+j))+frate
             zzzv5=zzzv3-rrate
             zzzvbar4=-1.0d0
             zzzvbar2=1.0d0
             zzzvbar1=1.0d0
-            del(lindereactionarray(21*i+5+j))=zzzv5
-            call DSVM3(deloft+lindereactionarray(21*i+5+j),zzzsvm2,
+            del(lindereactionarray(22*i+5+j))=zzzv5
+            call DSVM3(deloft+lindereactionarray(22*i+5+j),zzzsvm2,
      $         zzzvbar4,rrateoft+1,2,zzzvbar2,frateoft+1,2,zzzvbar1,
-     $         deloft+lindereactionarray(21*i+5+j),zzzsvm2)
+     $         deloft+lindereactionarray(22*i+5+j),zzzsvm2)
 C     
          end do
       end do
