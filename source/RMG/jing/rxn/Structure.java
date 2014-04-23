@@ -45,7 +45,7 @@ import jing.rxnSys.Logger;
  */
 // ## class Structure
 public class Structure {
-    protected static int MAX_PRODUCT_NUMBER = 4; // ## attribute MAX_PRODUCT_NUMBER
+    protected static int MAX_PRODUCT_NUMBER = 5; // ## attribute MAX_PRODUCT_NUMBER
     protected static int MAX_REACTANT_NUMBER = 3; // ## attribute MAX_REACTANT_NUMBER
     protected int direction; // ## attribute direction
     protected int redundancy = 1; // ## attribute redundancy
