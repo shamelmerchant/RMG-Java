@@ -479,8 +479,8 @@ public class ReactionTemplate {
 	                		    // There shouldn't be any rings larger than this.  For now don't do anything extra.
 	                		    break;
 	                	}
-				
-			   if (name.equals("intra_H_migration") && comments.contains("R2") && rcg.getCentralNodeAt(4)!=null) {
+			   
+			    if (name.equals("intra_H_migration") && comments.contains("R2") && rcg.getCentralNodeAt(4)!=null) {
 				fg = null;
 				}
 
