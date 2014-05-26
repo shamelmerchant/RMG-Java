@@ -110,7 +110,113 @@ public class QMTP implements GeneralGAPP {
     }
 
     // ## operation generateThermoData(ChemGraph)
+    public ThermoGAValue getEnthalpyCorrection(ChemGraph p_chemGraph) {
+
+// Implemented by A.G Vandeputte
+// First we have the list of thermo corrections
+// These are based on the isodesmic reaction approach and are hence a type of group corrections
+// Compared to the normaly used bond corrections these should be superior
+// the set currently used ethane, propane, ibutane, neopentane, ethene, propene, ibutene, ethyne, propyne, allene
+
+// Current groups are distinguised in hybridization and adjacent atoms (not in hybridization of adjacent atoms!, this would be the next step)
+// group	1	2	3	4	5	6	7	8	9	10	11	12
+//		C-CH3	C-C2H2	C-C3H	C-C4	CdC-HH	CdC-CH	CdC-C2	CtC-H	CtC-C	CddCC	Cb-H	Cb-C
+// PM7 corr	-0.94	-0.06	-0.31	-0.84	-0.67	2.29	3.91	4.61	6.66	10.10	-0.52	2.34
+//
+
+	double enthalpy_correction = 0;
+
+	String qmMethod = getQmMethod();
+
+	if (qmMethod.equals("pm7")) {
+	Iterator iter = p_chemGraph.getNodeList();
+	while (iter.hasNext()) {
+		Node node = (Node) iter.next();
+		Atom atom = (Atom) node.getElement();
+                Iterator neighbor_iter = node.getNeighbor();
+		if(atom.isCarbon()) {
+			int adjCarbon = 0;
+			int adjHydrogen = 0;
+			int singleBonds = 0;
+			int doubleBonds = 0;
+			int tripleBonds = 0;
+			int aromBonds = 0;
+
+                	while (neighbor_iter.hasNext()) {
+                      		Arc arc = (Arc) neighbor_iter.next();
+				Bond bond = (Bond) arc.getElement();
+				if (bond.isSingle()) {
+					singleBonds++;
+				} else if (bond.isDouble()) {
+					doubleBonds++;
+                                } else if (bond.isTriple()) {
+                                        doubleBonds++;
+				} else if (bond.isBenzene()) {
+					aromBonds++;
+				}
+ 		              	Iterator neighbor_iter2 = arc.getNeighbor();
+                		Node n1 = (Node) neighbor_iter2.next();
+                		Node n2 = (Node) neighbor_iter2.next();
+				Atom atom1 = (Atom) n1.getElement();
+				Atom atom2 = (Atom) n2.getElement();
+				if(atom1.isCarbon() && atom2.isCarbon()) 
+					adjCarbon++;
+				if((atom1.isCarbon() && atom2.isHydrogen()) || (atom2.isCarbon() && atom1.isHydrogen()))
+					adjHydrogen++;
+                      		}
+		
+			if (singleBonds==4) {
+				if (adjHydrogen==3 && adjCarbon==1) {
+					enthalpy_correction+=-0.94;
+				} else if (adjHydrogen==2 && adjCarbon==2) {
+					enthalpy_correction+=-0.06;
+				} else if (adjHydrogen==1 && adjCarbon==3) {
+					enthalpy_correction+=-0.31;
+				} else if (adjHydrogen==0 && adjCarbon==4) {
+					enthalpy_correction+=-0.84;
+				}
+			} else if (singleBonds==2) {
+				if (adjHydrogen==2 && adjCarbon==1) {
+					enthalpy_correction+=-0.67;
+				} else if (adjHydrogen==1 && adjCarbon==2) {
+                                        enthalpy_correction+=2.29;
+                                } else if (adjHydrogen==0 && adjCarbon==3) {
+                                        enthalpy_correction+=3.91;
+                                }
+			} else if (singleBonds==1) {
+                                if (adjHydrogen==1 && adjCarbon==2) {
+					if (aromBonds==2) {
+                                        	enthalpy_correction+=2.43;
+					} else if (tripleBonds==1) {
+						enthalpy_correction+=4.61;
+					}
+                                } else if (adjHydrogen==0 && adjCarbon==3) {
+                                        if (aromBonds==2) {
+                                                enthalpy_correction+=-0.52;
+                                        } else if (tripleBonds==1) {
+                                                enthalpy_correction+=6.66;
+                                        }
+                                }
+			} else if (singleBonds==0) {
+				enthalpy_correction+=10.10;
+			}
+
+		} 
+
+		}
+	}
+
+// We used an emperical correction of 0.5 (S. Merchant knows) 
+
+        ThermoGAValue enthalpy_corr = new ThermoGAValue(-enthalpy_correction/2
+                , 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, null);
+
+	return enthalpy_corr;
+
+    }
+
     public ThermoData generateThermoData(ChemGraph p_chemGraph) {
+
         if (!keepQMfiles) {
             cleanQmFiles();
         }
@@ -126,6 +232,7 @@ public class QMTP implements GeneralGAPP {
             p_chemGraph.fromprimarythermolibrary = true;
             return result;
         }
+	ThermoGAValue enthalpy_corr;
         result = new ThermoData();
         int maxRadNumForQM = Global.maxRadNumForQM;
         if (p_chemGraph.getRadicalNumber() > maxRadNumForQM)// use HBI if the molecule has more radicals than
@@ -227,6 +334,7 @@ public class QMTP implements GeneralGAPP {
                 }
                 node.updateFgElement();
             }
+	    enthalpy_corr = getEnthalpyCorrection(p_chemGraph);
             // recover the chem graph structure
             // recover the radical
             for (int i = 0; i < radicalSite; i++) {
@@ -269,9 +377,11 @@ public class QMTP implements GeneralGAPP {
                     + result.toString());// print result, at least for debugging purposes
         } else {
             // no need for HBI radical corrections, just get the QM result
+	    enthalpy_corr = getEnthalpyCorrection(p_chemGraph);
             tmpTherm = getQMThermoData(p_chemGraph);
             result = tmpTherm.copyWithExtraInfo();
         }
+        result.minus(enthalpy_corr);
         return result;
         // #]
     }
