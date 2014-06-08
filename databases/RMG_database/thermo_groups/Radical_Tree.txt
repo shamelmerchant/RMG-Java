@@ -260,6 +260,9 @@ L1: RJ
 		L4: CbOJ	
 	L3: OOJ		// O-O.
 		L4: ROOJ
+			L5: COOJ
+			L5: CCOOJ
+			L5: C2COOJ
 			L5: C3COOJ
 			L5: C(=O)OOJ
 		L4: HOOJ
