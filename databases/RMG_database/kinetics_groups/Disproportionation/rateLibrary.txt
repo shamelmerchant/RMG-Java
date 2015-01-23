@@ -143,4 +143,6 @@ Arrhenius_EP
 530.		C_rad/Cs3		Cdpri_Csrad			300-2500	2.89E+13	0		0		6.0		*3.0	0		0		0		5		SSM estimate
 531.		Cd_pri_rad		Cdpri_Csrad			300-2500	2.41E+12	0		0		6.0		*3.0	0		0		0		5		SSM estimate
 532.		O_pri_rad		Cdpri_Csrad			300-2500	6.03E+12	0		0		6.0		*3.0	0		0		0		5		SSM estimate
+533.            C_rad/H2/Cd             Cmethyl_Csrad/H/Cd              300-2500	8.43E+10	0		0		6.0		*2.5	0		0		0		5		SSM estimate
+
 
