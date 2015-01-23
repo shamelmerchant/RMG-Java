@@ -513,11 +513,11 @@ Arrhenius_EP
 3079 Cd/H/NonDeC 	C_rad/H/NonDeC 	300-1500 	1.48E-03 	4.34 	0.00 	10.3 	0 0 0 0 3 Aaron Vandeputte GAVs CBS-QB3 
 3080 Cd/H/NonDeC 	C_rad/Cs3 	300-1500 	1.48E-03 	4.34 	0.00 	10.2 	0 0 0 0 3 Aaron Vandeputte GAVs CBS-QB3 
 
-// iBuOH + OH (communication from truhlar group) refitted to arrhenius form
-3081 C/H2/CsO 		O_pri_rad 	300-2000 	2.16E+6 	2.002 	0.00 	-0.113 	0 0 0 0 3 
-3083 C/H/Cs2/Cs\O 	O_pri_rad 	300-2000 	3.476E+4 	2.458 	0.00 	-0.155 	0 0 0 0 3 
-3085 C/H3/Cs	 	O_pri_rad 	300-2000 	2.3E+8 		1.225 	0.00 	-0.467 	0 0 0 0 3 
-3087 O/H/NonDeC 	O_pri_rad 	300-2000 	3.35E+4 	2.378 	0.00 	-0.881 	0 0 0 0 3 
+// iBuOH + OH 
+3081 C/H2/CsO 		O_pri_rad 	300-2000 	1.43E+6 	2.053 	0.00 	-1.276 	0 0 0 0 3 
+3083 C/H/Cs2/Cs\O 	O_pri_rad 	300-2000 	5.94E+3 	2.681 	0.00 	-2.818 	0 0 0 0 3 
+3085 C/H3/Cs	 	O_pri_rad 	300-2000 	6.25E+3 	2.419 	0.00 	-1.4 	0 0 0 0 3 
+3087 O/H/NonDeC 	O_pri_rad 	300-2000 	9.45E+1 	3.1 	0.00 	-0.713 	0 0 0 0 3 
 
 // iBuOH AG Vandeputte CBS-QB3 1dHR 
 3088 O/H/NonDeC 	H_rad 		300-2000 	2.93E-01	4.14 	0.00 	4.8 	0 0 0 0 3 
@@ -570,7 +570,7 @@ Arrhenius_EP
 
 3122 O/H/NonDeC 	O_pri_rad 	300-2000 	3.95E-2 	4.19 	0.00 	-2.2 	0 0 0 0 2 CCSD(T)-F12a/pVTZ with MS-VTST treatment for rotors 
 3123 C/H2/CsO 		O_pri_rad 	300-2000 	2.155E+4 	2.6 	0.00 	-1.738 	0 0 0 0 2 CCSD(T)-F12a/pVTZ with MS-VTST treatment for rotors
-3124 C/H2/Cs/Cs\O 	O_pri_rad 	300-2000 	1.435E+1 	3.42 	0.00 	-1.255 	0 0 0 0 2 CCSD(T)-F12a/pVTZ with MS-VTST treatment for rotors
+3124 C/H2/Cs/Cs\O 	O_pri_rad 	300-2000 	1.435E+1 	3.42 	0.00 	-2.493 	0 0 0 0 2 CCSD(T)-F12a/pVTZ with MS-VTST treatment for rotors
 3125 C/H2/Cs/Cs\Cs|O 	O_pri_rad 	300-2000 	1.3E+1 		3.44 	0.00 	-2.442 	0 0 0 0 2 CCSD(T)-F12a/pVTZ with MS-VTST treatment for rotors 
 3126 C/H3/Cs 		O_pri_rad 	500-2000 	4.77E+8 	1.152 	0.00 	2.68 	0 0 0 0 2 CCSD(T)-F12a/pVTZ with MS-VTST treatment for rotors 
 
@@ -2959,3 +2959,5 @@ Arrhenius_EP
 7044   C/H3/Cd\H_Cd\H\Cs O_pri_rad  300-1500	0.203E+1	3.774	0.00	-1.49	0	0	0	0	3  CCSD(T)/6-311++G(d,p)//BH&HLYP/6-311G(d,p)
 // p-allylic site of iso-butene ref: DOI: 10.1021/jp1062786
 7045   C/H3/Cd\Cs_Cd\H2  O_pri_rad  300-1500	0.2E+1	3.594	0.00	-1.07	0	0	0	0	3  CCSD(T)/6-311++G(d,p)//BH&HLYP/6-311G(d,p)
+
+7046   CO_rad/Cs  C/H3/Cd\H_Cd\H2    300-1500	9E+2	2.8	0.00	20.0	0	0	0	0	5  SSM estimate 
